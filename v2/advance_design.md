@@ -27,70 +27,102 @@ Accept-Encoding: gzip, deflate
 Content-Encoding: gzip
 ```
 
-## 规则 3: 缓存控制
+## 规则 3: URL 长度和嵌套限制
 
-### 基础缓存策略
+### URL 长度规则
 
-任何接口都应有明确的缓存策略。默认不缓存。
+- 总长度不超过 2048 字符
+- 路径段不超过 255 字符
+- 查询字符串不超过 1024 字符
 
-缓存策略枚举值：
+### 嵌套深度限制
 
-- `no-cache`: 不缓存
-- `time-based`: 基于时间的缓存（设置过期时间）
-- `version-based`: 基于版本的缓存（通过 ETag 控制）
-- `count-based`: 基于次数的缓存（设置最大缓存次数）
+```
+✅ 推荐（2-3层）：
+/api/v1/users/123/posts
+/api/v1/users/123/posts/456/comments
 
-### 缓存响应头
-
-```http
-Cache-Control: public, max-age=3600
-ETag: "abc123"
-Last-Modified: Tue, 01 Jan 2024 12:00:00 GMT
+❌ 过深（避免超过4层）：
+/api/v1/companies/123/departments/456/teams/789/members/101/skills
 ```
 
-### 条件请求
+### 替代方案
 
-```http
-# 客户端请求
-If-None-Match: "abc123"
-If-Modified-Since: Tue, 01 Jan 2024 12:00:00 GMT
+对于深层嵌套，使用查询参数或独立端点：
 
-# 服务器响应（资源未变化）
-HTTP/1.1 304 Not Modified
+```
+# 替代深层嵌套
+GET /api/v1/members?companyId=123&departmentId=456&teamId=789
+
+# 或者使用独立端点
+GET /api/v1/team-members/789
 ```
 
-## 规则 4: 接口调用频率限制
+## 规则 4: 批量操作
 
-### 频率限制策略
+### 批量创建
 
-任何接口都应有频率限制。默认不限制。
-
-- 限制值为整数，0 表示不限制
-- 通常以"每秒/每分钟/每小时"为单位
-- 超过限制返回 429 状态码
-
-### 频率限制响应头
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1640995200
-Retry-After: 60
+```
+POST /api/v1/users/batch
+[
+  {
+    "name": "张三",
+    "email": "zhangsan@example.com"
+  },
+  {
+    "name": "李四",
+    "email": "lisi@example.com"
+  }
+]
 ```
 
-### 频率限制错误响应
+### 批量更新
+
+```
+PATCH /api/v1/users/batch
+[
+  {
+    "id": 123,
+    "name": "张三新"
+  },
+  {
+    "id": 124,
+    "status": "inactive"
+  }
+]
+```
+
+### 批量删除
+
+```
+DELETE /api/v1/users/batch
+{
+  "ids": [123, 124, 125]
+}
+```
+
+### 批量操作响应
 
 ```json
 {
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "请求频率超过限制",
-    "details": {
-      "limit": 100,
-      "remaining": 0,
-      "resetTime": "2024-01-01T13:00:00Z",
-      "retryAfter": 3600
-    }
+  "data": {
+    "success": [
+      {
+        "id": 123,
+        "status": "updated"
+      }
+    ],
+    "failed": [
+      {
+        "id": 124,
+        "error": "用户不存在"
+      }
+    ]
+  },
+  "meta": {
+    "totalCount": 2,
+    "successCount": 1,
+    "failedCount": 1
   }
 }
 ```
@@ -104,8 +136,6 @@ Content-Type: application/json; charset=utf-8
 X-Request-ID: req-123456789
 X-Response-Time: 123ms
 X-API-Version: v1
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
 ```
 
 ### 分页响应头
@@ -115,24 +145,7 @@ X-Pagination-Page: 1
 X-Pagination-Limit: 10
 X-Pagination-Total: 50
 X-Pagination-Total-Pages: 5
-Link: <https://api.example.com/users?page=2>; rel="next",
-      <https://api.example.com/users?page=5>; rel="last"
-```
-
-### 错误相关响应头
-
-```http
-# 认证错误
-WWW-Authenticate: Bearer realm="api"
-
-# 频率限制
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 0
-X-RateLimit-Reset: 1640995200
-Retry-After: 3600
-
-# 服务不可用
-Retry-After: 60
+Link: <https://api.example.com/users?page=2>; rel="next"
 ```
 
 ## 规则 6: 国际化支持
@@ -162,46 +175,7 @@ Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
 Content-Language: zh-CN
 ```
 
-## 规则 7: 详细状态码
-
-### 1xx 信息性状态码
-
-| 状态码 | 含义                | 使用场景             |
-| ------ | ------------------- | -------------------- |
-| 100    | Continue            | 客户端应继续发送请求 |
-| 101    | Switching Protocols | 协议切换             |
-
-### 3xx 重定向状态码
-
-| 状态码 | 含义               | 使用场景             |
-| ------ | ------------------ | -------------------- |
-| 301    | Moved Permanently  | 资源永久移动         |
-| 302    | Found              | 资源临时移动         |
-| 304    | Not Modified       | 缓存有效             |
-| 307    | Temporary Redirect | 临时重定向，保持方法 |
-| 308    | Permanent Redirect | 永久重定向，保持方法 |
-
-### 详细 4xx 状态码
-
-| 状态码 | 含义               | 使用场景           |
-| ------ | ------------------ | ------------------ |
-| 405    | Method Not Allowed | HTTP 方法不支持    |
-| 406    | Not Acceptable     | 不可接受的内容类型 |
-| 408    | Request Timeout    | 请求超时           |
-| 410    | Gone               | 资源已永久删除     |
-| 413    | Payload Too Large  | 请求体过大         |
-| 415    | Unsupported Media  | 不支持的媒体类型   |
-| 429    | Too Many Requests  | 请求过于频繁       |
-
-### 详细 5xx 状态码
-
-| 状态码 | 含义            | 使用场景   |
-| ------ | --------------- | ---------- |
-| 501    | Not Implemented | 功能未实现 |
-| 502    | Bad Gateway     | 网关错误   |
-| 504    | Gateway Timeout | 网关超时   |
-
-## 规则 8: 异步操作
+## 规则 7: 异步操作
 
 ### 异步任务创建
 
@@ -239,21 +213,7 @@ GET /api/v1/tasks/task-123456789
 }
 ```
 
-### 完成通知
-
-```
-# Webhook 通知
-POST /your-webhook-url
-{
-  "taskId": "task-123456789",
-  "status": "completed",
-  "result": {
-    "downloadUrl": "https://api.example.com/files/export-123.csv"
-  }
-}
-```
-
-## 规则 9: 搜索和过滤
+## 规则 8: 搜索和过滤
 
 ### 基础搜索
 
@@ -291,7 +251,7 @@ POST /api/v1/users/search
 }
 ```
 
-## 规则 10: 文件操作
+## 规则 9: 文件操作
 
 ### 文件上传
 
@@ -343,3 +303,29 @@ POST /api/v1/files/upload-123456789/complete
   "chunks": [1, 2, 3, ..., 100]
 }
 ```
+
+## 规则 10: API 安全规范
+
+### 敏感信息传递
+
+- 敏感数据必须通过请求体传递，不得出现在 URL 中
+- 强制使用 HTTPS
+
+### 响应数据处理
+
+- 密码字段永不返回
+- 敏感信息适当脱敏
+
+### 认证令牌
+
+- 使用 Authorization 头传递
+- 避免在查询参数中传递 token
+
+[简单的代码示例]
+
+# 其他规则
+
+其他规则由于复杂性放在单独章节进行说明。
+
+[缓存策略](./cache_advanced.md)
+[速率限制](./rate_limiting.md)

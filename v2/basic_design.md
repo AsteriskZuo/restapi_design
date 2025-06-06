@@ -8,192 +8,108 @@
 /api/v3/users    # 版本3
 ```
 
-## 规则 2: 使用 HTTP 标准方法
+## 规则 2: HTTP 方法选择指南
 
-- **GET**: 获取资源（安全、幂等、可缓存）
-- **POST**: 创建资源（非安全、非幂等）
-- **PUT**: 完整更新资源（非安全、幂等）
-- **PATCH**: 部分更新资源（非安全、非幂等）
-- **DELETE**: 删除资源（非安全、幂等）
+### CRUD 操作映射
+
+- **增加(Create)**: POST
+- **查询(Read)**: GET
+- **修改(Update)**: PUT（完整更新）或 PATCH（部分更新）
+- **删除(Delete)**: DELETE
+
+### HTTP 方法特性
+
+| 方法   | 安全性 | 幂等性     | 缓存性     | 主要用途 | 说明                         |
+| ------ | ------ | ---------- | ---------- | -------- | ---------------------------- |
+| GET    | 安全   | 幂等       | 可缓存     | 获取资源 | 不应有副作用                 |
+| POST   | 不安全 | 通常非幂等 | 通常不缓存 | 创建资源 | 可通过幂等键设计为幂等       |
+| PUT    | 不安全 | 幂等       | 条件缓存   | 完整更新 | 响应可在某些情况下缓存       |
+| PATCH  | 不安全 | 取决于实现 | 通常不缓存 | 部分更新 | 设置操作幂等，增量操作非幂等 |
+| DELETE | 不安全 | 幂等       | 条件缓存   | 删除资源 | 重复删除不应报错             |
+
+**安全性说明**:
+
+- **安全**：不会修改服务器状态，可以安全地重复调用
+- **不安全**：可能修改服务器状态
+
+**幂等性说明**:
+
+- **幂等**：多次调用产生相同结果
+- **非幂等**：多次调用可能产生不同结果
+- **取决于实现**：根据具体操作语义确定
+
+**缓存性说明**:
+
+- **可缓存**：响应可以被缓存
+- **不缓存**：响应不应被缓存
+- **条件缓存**：在特定条件下可以缓存
 
 ## 规则 3: 服务不保存状态
 
 ```
-✅ 正确：
+✅ 正确:
 GET /api/v1/users/123/posts?page=2&limit=10
 Authorization: Bearer token123
 
-❌ 错误：
+❌ 错误:
 GET /api/v1/getNextPage  # 依赖服务器端状态
 ```
 
 ## 规则 4: 认证方式
 
-采用 JWT Bearer Token 进行调用验证。
+认证方式有很多，可以参考 RFC 6750 规范。
+
+推荐的认证方式是 采用 JWT Bearer Token 进行调用验证。
 
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## 规则 5: 不使用动词形式的 URL
+## 规则 4.1: 标准 HTTP 头部
 
-```
-❌ 动词形式的URL：
-GET /api/v1/getUsers
-POST /api/v1/createUser
-DELETE /api/v1/deleteUser/123
+### 必须包含的请求头
 
-✅ 正确的名词形式：
-GET /api/v1/users
-POST /api/v1/users
-DELETE /api/v1/users/123
+```http
+Accept: application/json
+Content-Type: application/json; charset=utf-8
+User-Agent: YourApp/1.0
+Authorization: Bearer token123
 ```
 
-## 规则 6: 数据传递规范
+### 推荐的请求头
 
-**简单参数**: 使用查询参数
-
-```
-GET /api/v1/users?status=active&limit=10
-```
-
-**复杂数据**: 使用请求体
-
-```
-POST /api/v1/users
-{
-  "name": "张三",
-  "email": "zhangsan@example.com",
-  "profile": {
-    "age": 25,
-    "interests": ["技术", "旅行"]
-  }
-}
+```http
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
+Accept-Encoding: gzip, deflate
+Cache-Control: no-cache    # 对于敏感请求
 ```
 
-## 规则 7: 内容分类
+### 标准响应头
 
-按业务领域对资源进行分类：
-
-```
-# 用户类别
-GET /api/v1/users
-
-# 群组类别
-GET /api/v1/groups
-
-# 消息类别
-GET /api/v1/messages
+```http
+Content-Type: application/json; charset=utf-8
+Content-Language: zh-CN
+Content-Encoding: gzip     # 启用压缩时
+X-Request-ID: req-123456789
+X-Response-Time: 123ms
 ```
 
-## 规则 8: 规范 URL 命名
+## 规则 5: 响应格式
 
-**设计原则：**
+相应格式有多种，可以参考 RFC 7807 规范。
 
-- 使用名词而不是动词
-- 使用复数形式
-- 使用小写字母
-- 使用连字符而不是下划线
-
-```
-✅ 正确示例：
-GET /api/v1/users
-GET /api/v1/user-profiles
-GET /api/v1/order-items
-
-❌ 错误示例：
-GET /api/v1/getUsers
-GET /api/v1/user_profiles
-GET /api/v1/users.json
-```
-
-## 规则 9: HTTP 方法选择指南
-
-### CRUD 操作映射
-
-- **增加(Create)**: POST
-- **查询(Read)**: GET 或 POST（复杂查询）
-- **修改(Update)**: PUT（完整更新）或 PATCH（部分更新）
-- **删除(Delete)**: DELETE
-
-### 方法特性
-
-| 方法   | 安全性 | 幂等性   | 缓存性 | 主要用途 |
-| ------ | ------ | -------- | ------ | -------- |
-| GET    | 安全   | 幂等     | 可缓存 | 获取资源 |
-| POST   | 不安全 | 非幂等   | 不缓存 | 创建资源 |
-| PUT    | 不安全 | 幂等     | 不缓存 | 完整更新 |
-| PATCH  | 不安全 | 非幂等\* | 不缓存 | 部分更新 |
-| DELETE | 不安全 | 幂等     | 不缓存 | 删除资源 |
-
-**注意**: \*PATCH 方法根据 RFC 5789 规范，本质上是非幂等的。但在特定实现中，可以设计为幂等的（例如：设置字段值、使用条件请求等）。
-
-## 规则 10: HTTP 状态码
-
-### 成功状态码
-
-| 状态码 | 含义       | 使用场景                  |
-| ------ | ---------- | ------------------------- |
-| 200    | OK         | GET, PUT, PATCH 成功      |
-| 201    | Created    | POST 创建成功             |
-| 204    | No Content | DELETE 成功，或无返回内容 |
-
-### 客户端错误状态码
-
-| 状态码 | 含义                 | 使用场景               |
-| ------ | -------------------- | ---------------------- |
-| 400    | Bad Request          | 请求格式错误           |
-| 401    | Unauthorized         | 未认证                 |
-| 403    | Forbidden            | 无权限                 |
-| 404    | Not Found            | 资源不存在             |
-| 409    | Conflict             | 资源冲突               |
-| 422    | Unprocessable Entity | 请求格式正确但语义错误 |
-
-### 服务器错误状态码
-
-| 状态码 | 含义                  | 使用场景       |
-| ------ | --------------------- | -------------- |
-| 500    | Internal Server Error | 服务器内部错误 |
-| 503    | Service Unavailable   | 服务不可用     |
-
-## 规则 11: 响应格式
+推荐的响应格式是 JSON Schema 格式。
 
 ### 成功响应格式
-
-**单一资源响应**
 
 ```json
 {
   "data": {
     "id": 123,
     "name": "张三",
-    "email": "zhangsan@example.com",
-    "createdAt": "2024-01-01T12:00:00Z"
+    "email": "zhangsan@example.com"
   },
   "meta": {
-    "timestamp": "2024-01-01T12:00:00Z",
-    "version": "v1"
-  }
-}
-```
-
-**列表资源响应**
-
-```json
-{
-  "data": [
-    {
-      "id": 123,
-      "name": "张三"
-    }
-  ],
-  "meta": {
-    "pagination": {
-      "page": 1,
-      "limit": 10,
-      "total": 50,
-      "totalPages": 5
-    },
     "timestamp": "2024-01-01T12:00:00Z",
     "version": "v1"
   }
@@ -211,138 +127,107 @@ GET /api/v1/users.json
       "field": "email",
       "reason": "邮箱格式不正确"
     },
-    "timestamp": "2024-01-01T12:00:00Z",
-    "requestId": "req-123456789"
+    "timestamp": "2024-01-01T12:00:00Z"
   }
 }
 ```
 
-### 核心原则
-
-- **data**: 包含实际业务数据
-- **meta**: 包含元数据信息（时间戳、版本、分页等）
-- **error**: 包含错误信息（错误码、消息、详情等）
-- 字段命名保持一致的风格（camelCase 或 snake_case）
-- 时间字段统一使用 ISO 8601 格式
-- 错误代码使用分层结构：`{CATEGORY}_{SPECIFIC_ERROR}`
-
-### 常见错误代码分类
-
-- `AUTH_*`: 认证相关错误
-- `PERMISSION_*`: 权限相关错误
-- `VALIDATION_*`: 验证相关错误
-- `BUSINESS_*`: 业务逻辑错误
-- `SYSTEM_*`: 系统错误
-
-## 规则 12: URL 长度和嵌套限制
-
-### URL 长度规则
-
-- 总长度不超过 2048 字符
-- 路径段不超过 255 字符
-- 查询字符串不超过 1024 字符
-
-### 嵌套深度限制
+## 规则 6: 不使用动词形式的 URL
 
 ```
-✅ 推荐（2-3层）：
-/api/v1/users/123/posts
-/api/v1/users/123/posts/456/comments
+❌ 动词形式的URL:
+GET /api/v1/getUsers
+POST /api/v1/createUser
 
-❌ 过深（避免超过4层）：
-/api/v1/companies/123/departments/456/teams/789/members/101/skills
+✅ 正确的名词形式:
+GET /api/v1/users
+POST /api/v1/users
 ```
 
-### 替代方案
+## 规则 7: 数据传递规范
 
-对于深层嵌套，使用查询参数或独立端点：
+**简单参数**: 使用查询参数
 
-```
-# 替代深层嵌套
-GET /api/v1/members?companyId=123&departmentId=456&teamId=789
-
-# 或者使用独立端点
-GET /api/v1/team-members/789
-```
-
-## 规则 13: 批量操作
-
-### 批量创建
+- 单一值：字符串、数字、布尔值
+- 过滤、排序、分页等控制参数
 
 ```
-POST /api/v1/users/batch
-[
-  {
-    "name": "张三",
-    "email": "zhangsan@example.com"
-  },
-  {
-    "name": "李四",
-    "email": "lisi@example.com"
-  }
-]
+GET /api/v1/users?status=active&limit=10
 ```
 
-### 批量更新
+**复杂数据**: 使用请求体
+
+- 对象结构、嵌套数据
+- 数组、列表数据
+- 创建/更新的完整实体
 
 ```
-PATCH /api/v1/users/batch
-[
-  {
-    "id": 123,
-    "name": "张三新"
-  },
-  {
-    "id": 124,
-    "status": "inactive"
-  }
-]
-```
-
-### 批量删除
-
-```
-DELETE /api/v1/users/batch
+POST /api/v1/users
 {
-  "ids": [123, 124, 125]
+  "name": "张三",
+  "email": "zhangsan@example.com"
 }
 ```
 
-### 批量操作响应
+## 规则 8: HTTP 状态码
 
-```json
-{
-  "data": {
-    "success": [
-      {
-        "id": 123,
-        "status": "updated"
-      }
-    ],
-    "failed": [
-      {
-        "id": 124,
-        "error": "用户不存在"
-      }
-    ]
-  },
-  "meta": {
-    "totalCount": 2,
-    "successCount": 1,
-    "failedCount": 1
-  }
-}
-```
+### 1xx 信息性状态码
 
-## 规则 14: 分页规范
+| 状态码 | 含义                | 使用场景             |
+| ------ | ------------------- | -------------------- |
+| 100    | Continue            | 客户端应继续发送请求 |
+| 101    | Switching Protocols | 协议切换             |
 
-### 基础分页参数
+### 2xx 成功状态码
+
+| 状态码 | 含义       | 使用场景             |
+| ------ | ---------- | -------------------- |
+| 200    | OK         | 请求成功             |
+| 201    | Created    | 资源创建成功         |
+| 202    | Accepted   | 请求已接受，异步处理 |
+| 204    | No Content | 请求成功，无返回内容 |
+
+### 3xx 重定向状态码
+
+| 状态码 | 含义               | 使用场景             |
+| ------ | ------------------ | -------------------- |
+| 301    | Moved Permanently  | 资源永久移动         |
+| 302    | Found              | 资源临时移动         |
+| 304    | Not Modified       | 缓存有效             |
+| 307    | Temporary Redirect | 临时重定向，保持方法 |
+| 308    | Permanent Redirect | 永久重定向，保持方法 |
+
+### 4xx 客户端错误状态码
+
+| 状态码 | 含义                 | 使用场景           |
+| ------ | -------------------- | ------------------ |
+| 400    | Bad Request          | 请求格式错误       |
+| 401    | Unauthorized         | 认证失败           |
+| 403    | Forbidden            | 权限不足           |
+| 404    | Not Found            | 资源不存在         |
+| 405    | Method Not Allowed   | HTTP 方法不支持    |
+| 406    | Not Acceptable       | 不可接受的内容类型 |
+| 408    | Request Timeout      | 请求超时           |
+| 409    | Conflict             | 资源冲突           |
+| 410    | Gone                 | 资源已永久删除     |
+| 413    | Payload Too Large    | 请求体过大         |
+| 415    | Unsupported Media    | 不支持的媒体类型   |
+| 422    | Unprocessable Entity | 语义错误           |
+| 429    | Too Many Requests    | 请求过于频繁       |
+
+### 详细 5xx 状态码
+
+| 状态码 | 含义            | 使用场景   |
+| ------ | --------------- | ---------- |
+| 501    | Not Implemented | 功能未实现 |
+| 502    | Bad Gateway     | 网关错误   |
+| 504    | Gateway Timeout | 网关超时   |
+
+## 规则 9: 分页规范
 
 ```
 GET /api/v1/users?page=1&limit=10
 ```
-
-### 分页响应
 
 ```json
 {
@@ -358,4 +243,37 @@ GET /api/v1/users?page=1&limit=10
     }
   }
 }
+```
+
+## 规则 10: 内容分类
+
+按业务领域对资源进行分类:
+
+```
+# 用户类别
+GET /api/v1/users
+
+# 群组类别
+GET /api/v1/groups
+
+# 消息类别
+GET /api/v1/messages
+```
+
+## 规则 11: 规范 URL 命名
+
+**设计原则:**
+
+- 使用名词而不是动词
+- 使用复数形式
+- 使用小写字母和连字符
+
+```
+✅ 正确:
+GET /api/v1/users
+GET /api/v1/user-profiles
+
+❌ 错误:
+GET /api/v1/getUsers
+GET /api/v1/user_profiles
 ```
