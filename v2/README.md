@@ -12,12 +12,20 @@ v2 版本在 v1 "大而全" 的基础上进行了扁平化设计，主要改进�
 
 ```
 v2/
-├── README.md           # 版本说明和使用指南
-├── basic_design.md     # 基础规则（必须遵循）
-├── advance_design.md   # 高级规则（可选特性）
-├── glossary.md         # 术语表和概念解释
-├── im_design.md        # 针对 IM 产品的具体设计
-└── issues.md           # 现有产品存在的实际问题记录
+├── README.md             # 版本说明和使用指南
+├── basic_design.md       # 基础规则（必须遵循）
+├── advance_design.md     # 高级规则（可选特性）
+├── rate_limiting.md      # 限流机制详细设计
+├── cache_advanced.md     # 高级缓存策略
+├── security.md           # API安全规范
+├── error_handling.md     # 错误处理策略
+├── data_validation.md    # 数据验证规范
+├── monitoring.md         # 监控和可观测性
+├── versioning.md         # 版本管理策略
+├── webhooks.md           # Webhooks设计规范
+├── glossary.md           # 术语表和概念解释
+├── im_design.md          # 针对 IM 产品的具体设计
+└── issues.md             # 现有产品存在的实际问题记录
 ```
 
 ## 使用指南
