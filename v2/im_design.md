@@ -3,11 +3,11 @@
 我认为 IM 合理的类别是：
 
 - auth: 调用其他类别的前提。
-- users
-- groups
-- rooms
-- messages
-- push
+- users: 用户管理。
+- groups: 群组管理。
+- rooms: 聊天室管理。
+- messages: 消息管理。
+- push: 推送通知管理。
 
 我设计的 URL：
 
