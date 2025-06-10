@@ -115,7 +115,11 @@ DELETE /api/v1/users/batch
     "failed": [
       {
         "id": 124,
-        "error": "用户不存在"
+        "error": {
+          "code": 40004,
+          "type": "RESOURCE_NOT_FOUND",
+          "message": "用户不存在"
+        }
       }
     ]
   },
@@ -126,6 +130,12 @@ DELETE /api/v1/users/batch
   }
 }
 ```
+
+**批量操作原则**：
+
+- 部分成功也返回 200 状态码
+- 完全失败才返回 4xx 状态码
+- 提供详细的成功/失败统计信息
 
 ## 规则 5: 响应头规范
 
