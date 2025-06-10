@@ -9,13 +9,13 @@
 - messages: 消息管理。
 - push: 推送通知管理。
 
-我设计的 URL：
+我推荐的设计：
 
 ```
-https://{host}/{org_name}/{app_name}/{version}/auth
-https://{host}/{org_name}/{app_name}/{version}/users
-https://{host}/{org_name}/{app_name}/{version}/groups
-https://{host}/{org_name}/{app_name}/{version}/rooms
-https://{host}/{org_name}/{app_name}/{version}/messages
-https://{host}/{org_name}/{app_name}/{version}/push
+https://{host}/{version}/{org_name}/{app_name}/auth
+https://{host}/{version}/{org_name}/{app_name}/users
+https://{host}/{version}/{org_name}/{app_name}/groups
+https://{host}/{version}/{org_name}/{app_name}/rooms
+https://{host}/{version}/{org_name}/{app_name}/messages
+https://{host}/{version}/{org_name}/{app_name}/push
 ```

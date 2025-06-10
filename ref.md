@@ -2,7 +2,7 @@
 
 ### 核心 HTTP 协议 RFC
 
-1. **RFC 9110** - HTTP Semantics (2022 年)：HTTP 语义的核心规范
+1. **RFC 9110** - HTTP Semantics (2022 年)：HTTP 语义的核心规范 [点击这里](https://datatracker.ietf.org/doc/rfc9110/)
 2. **RFC 9111** - HTTP Caching (2022 年)：HTTP 缓存规范
 3. **RFC 9112** - HTTP/1.1 (2022 年)：HTTP/1.1 消息语法和路由
 4. **RFC 9113** - HTTP/2 (2022 年)：HTTP/2 协议
@@ -10,7 +10,7 @@
 
 ### REST API 设计相关 RFC
 
-1. **RFC 9205** - Building Protocols with HTTP (2022 年)：使用 HTTP 构建协议的最佳实践
+1. **RFC 9205** - Building Protocols with HTTP (2022 年)：使用 HTTP 构建协议的最佳实践 [点击这里](https://datatracker.ietf.org/doc/rfc9205/)
 2. **RFC 6750** - OAuth 2.0 Bearer Token Usage：Bearer 令牌使用规范
 3. **RFC 7807** - Problem Details for HTTP APIs：HTTP API 错误详情格式
 4. **RFC 8288** - Web Linking：Web 链接规范
@@ -65,3 +65,9 @@
 4. **采用 OAuth 2.0 (RFC 6750)**进行认证授权
 
 这样既符合国际标准，又能确保与现有生态系统的兼容性。
+
+## 大厂示例
+
+[tencent](https://cloud.tencent.com/document/product/269/32688)
+
+[rongcloud](https://docs.rongcloud.cn/platform-chat-api)

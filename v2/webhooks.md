@@ -93,7 +93,7 @@ Webhooks 是实现事件驱动架构的重要机制，允许系统在特定事�
     "name": "张三",
     "createdAt": "2024-01-01T12:00:00Z"
   },
-  "metadata": {
+  "meta": {
     "correlationId": "corr-abc123",
     "requestId": "req-def456",
     "retryCount": 0
@@ -153,7 +153,7 @@ POST /api/v1/webhooks
   "version": "1.0",
   "secret": "whsec_abc123",
   "active": true,
-  "metadata": {
+  "meta": {
     "description": "Partner API webhook",
     "environment": "production"
   }
@@ -194,7 +194,7 @@ HTTP/1.1 201 Created
         "data.status": { "equals": "active" }
       }
     },
-    "metadata": {
+    "meta": {
       "source": { "equals": "user-service" }
     }
   }
@@ -444,7 +444,7 @@ const failureHandlers = {
       "data": {...}
     }
   ],
-  "metadata": {
+  "meta": {
     "batchSize": 2,
     "processingTime": "2024-01-01T12:00:00Z"
   }
@@ -711,7 +711,7 @@ PATCH /api/v1/webhooks/{webhookId}
 {
   "events": ["user.created", "user.updated", "user.deleted"],
   "active": true,
-  "metadata": {
+  "meta": {
     "description": "Updated webhook configuration"
   }
 }

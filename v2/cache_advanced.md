@@ -980,7 +980,7 @@ Last-Modified: Thu, 02 Jan 2024 15:45:00 GMT
 {
   "id": 123,
   "data": {...},
-  "metadata": {
+  "meta": {
     "version": "v1.2.3",
     "createdAt": "2024-01-01T12:00:00Z",
     "updatedAt": "2024-01-02T15:45:00Z",

@@ -96,7 +96,7 @@ X-Response-Time: 123ms
 
 ## 规则 5: 响应格式
 
-相应格式有多种，可以参考 RFC 7807 规范。
+相应格式有多种，可以参考 RFC 9110 规范。
 
 推荐的响应格式是 JSON Schema 格式。
 
@@ -116,21 +116,42 @@ X-Response-Time: 123ms
 }
 ```
 
+详细内容，请参考 [response_format_standard.md](./response_format_standard.md)
+
 ### 错误响应格式
+
+采用 **数字错误码 + 字符串错误码** 的双重机制：
 
 ```json
 {
   "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "请求参数验证失败",
+    "code": 40001, // 数字错误码（程序处理）
+    "type": "VALIDATION_ERROR", // 字符串错误码（开发者理解）
+    "message": "Request validation failed",
+    "localizedMessage": {
+      "zh-CN": "请求参数验证失败",
+      "en-US": "Request validation failed"
+    },
     "details": {
       "field": "email",
-      "reason": "邮箱格式不正确"
+      "reason": "Invalid email format"
     },
-    "timestamp": "2024-01-01T12:00:00Z"
+    "timestamp": "2024-01-01T12:00:00Z",
+    "requestId": "req-123456789"
   }
 }
 ```
+
+**错误码分段规划**：
+
+- 40000-40999: 客户端请求错误
+- 41000-41999: 认证授权错误
+- 42000-42999: 业务逻辑错误
+- 43000-43999: 资源状态错误
+- 44000-44999: 限流配额错误
+- 50000-50999: 服务器内部错误
+
+详细错误码定义和示例，请参考 [detail_error_format.md](./detail_error_format.md)。
 
 ## 规则 6: 不使用动词形式的 URL
 
@@ -277,3 +298,5 @@ GET /api/v1/user-profiles
 GET /api/v1/getUsers
 GET /api/v1/user_profiles
 ```
+
+为什么使用连字符的原因，请参考 [url_naming_rationale.md](./url_naming_rationale.md)。
