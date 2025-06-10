@@ -117,7 +117,7 @@ X-Response-Time: 123ms
   },
   "meta": {
     "timestamp": "2024-01-01T12:00:00Z",
-    "version": "v1"
+    "requestId": "req-123456789"
   }
 }
 ```

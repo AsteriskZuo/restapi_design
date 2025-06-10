@@ -233,8 +233,58 @@ GET /api/v1/users?q=zhang&fields=id,name,email
 
 ### 高级过滤
 
+本 API 主要采用 **RSQL/FIQL** 语法进行过滤查询，语法简洁且功能强大：
+
 ```
-GET /api/v1/users?status=active&age[gte]=18&age[lt]=65&city=beijing
+GET /api/v1/users?filter=status==active;age=ge=18;age=lt=65;city==beijing
+```
+
+同时兼容基础键值对语法：
+
+```
+GET /api/v1/users?status=active&city=beijing
+```
+
+> 📖 **完整对比**: 查看 [搜索规范比较分析](./search_standards_comparison.md) 了解各种过滤语法的详细对比和选择建议
+
+#### 主要操作符
+
+| RSQL 操作符 | 说明     | 示例                          |
+| ----------- | -------- | ----------------------------- |
+| `==`        | 等于     | `status==active`              |
+| `!=`        | 不等于   | `status!=deleted`             |
+| `=gt=`      | 大于     | `age=gt=18`                   |
+| `=ge=`      | 大于等于 | `age=ge=18`                   |
+| `=lt=`      | 小于     | `age=lt=65`                   |
+| `=le=`      | 小于等于 | `age=le=65`                   |
+| `=in=`      | 包含     | `status=in=(active,pending)`  |
+| `=out=`     | 不包含   | `status=out=(deleted,banned)` |
+| `==*`       | 模糊匹配 | `name==*zhang*`               |
+
+#### 逻辑组合
+
+```
+# AND 逻辑（分号分隔）
+GET /api/v1/users?filter=status==active;age=ge=18
+
+# OR 逻辑（逗号分隔）
+GET /api/v1/users?filter=status==active,status==pending
+
+# 复杂组合（圆括号分组）
+GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
+```
+
+#### 常用示例
+
+```
+# 模糊搜索
+GET /api/v1/users?filter=name==*zhang*;email==*@gmail.com
+
+# 日期范围
+GET /api/v1/users?filter=createdAt=ge=2023-01-01;createdAt=lt=2024-01-01
+
+# 嵌套字段
+GET /api/v1/users?filter=profile.age=ge=18;address.city==beijing
 ```
 
 ### 复杂查询
