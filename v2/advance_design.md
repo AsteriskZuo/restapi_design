@@ -121,12 +121,12 @@ DELETE /api/v1/users/batch
           "message": "用户不存在"
         }
       }
-    ]
-  },
-  "meta": {
-    "totalCount": 2,
-    "successCount": 1,
-    "failedCount": 1
+    ],
+    "statistics": {
+      "totalCount": 2,
+      "successCount": 1,
+      "failedCount": 1
+    }
   }
 }
 ```

@@ -141,7 +141,9 @@ X-Response-Time: 123ms
     "details": {
       "field": "email",
       "reason": "Invalid email format"
-    },
+    }
+  },
+  "meta": {
     "timestamp": "2024-01-01T12:00:00Z",
     "requestId": "req-123456789"
   }
