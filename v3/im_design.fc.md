@@ -2,7 +2,9 @@
 
 本文档基于 `RFC9110`、`RFC9205` 等国际标准，结合 `Claude-4-Sonnet` 的最佳实践，深度分析 IM 业务场景特点，形成了这套较为完整的可落地的规范建议方案。
 
-## 1. API 版本
+## 一、基础架构层
+
+### 1. API 版本
 
 URL 路径中明确指定版本号，支持向后兼容。
 
@@ -18,7 +20,7 @@ https://api.easemob.com/v1.2/myorg/myapp/users // 不支持次要版本号
 https://api.easemob.com/v1.2.3/myorg/myapp/users // 不支持补丁版本号
 ```
 
-## 2. 服务无状态
+### 2. 服务无状态
 
 服务不保存客户端会话状态，每个请求包含所有必要信息，提高可扩展性和可靠性。
 
@@ -31,13 +33,15 @@ authorization: Bearer token123
 GET /api/v1/getNextPage  # 依赖服务器端状态
 ```
 
-## 3. 安全规范
+### 3. 安全规范
 
 涵盖认证授权、数据安全、访问控制、传输安全和审计监控等核心安全方面。
 
 详细设计请参考 [安全规范文档](./im_security_overview.md)
 
-## 4. HTTP 方法选择
+## 二、请求层
+
+### 4. HTTP 方法选择
 
 **CRUD 操作映射**
 
@@ -73,7 +77,7 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 - **不缓存**：响应不应被缓存
 - **条件缓存**：在特定条件下可以缓存
 
-## 5. URL 规范
+### 5. URL 规范
 
 URL 设计遵循 RESTful 原则，确保资源定位的准确性和可读性。
 
@@ -95,7 +99,7 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 
 **详细规范**：完整的 URL 设计规范请参考 [URL 规范文档](./im_url_specification.md)
 
-## 6. 认证方式选择
+### 6. 认证方式选择
 
 推荐使用 JWT Bearer Token，符合 RFC 6750 规范，支持无状态认证和分布式部署。
 
@@ -103,7 +107,7 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## 7. HTTP 头部要求
+### 7. HTTP 头部要求
 
 规范 HTTP 头部使用，确保客户端和服务端正确处理请求内容格式、编码和认证信息。
 
@@ -132,13 +136,13 @@ authorization: Bearer token123
 content-type: application/json; charset=utf-8
 ```
 
-## 8. 参数规范
+### 8. 参数规范
 
 统一参数传递方式，包括路径参数、查询参数、请求体参数等，支持 UTF-8 编码。
 
 详细设计请参考 [参数规范文档](./im_parameter_specification.md)
 
-## 9. 命名规范
+### 9. 命名规范
 
 统一命名风格，包括 URL、参数、字段等命名规则。
 
@@ -169,7 +173,9 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 详细设计请参考 [命名规范文档](./im_naming_conventions.md)
 
-## 10. 响应体格式设计
+## 三、响应层
+
+### 10. 响应体格式设计
 
 采用标准响应结构，确保数据的一致性和可扩展性，支持分页等高级特性。
 
@@ -207,7 +213,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的响应格式设请参考 [响应格式设计文档](./im_response_format.md)
 
-## 11. 错误码规范
+### 11. 错误码规范
 
 采用 11 位错误码结构，确保错误信息的准确性和可追踪性。
 
@@ -227,7 +233,9 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的错误码请参考 [错误码设计文档](./im_detail_error_format.md)
 
-## 12. 查询：排序设计
+## 四、查询功能层
+
+### 12. 查询：排序设计
 
 支持单字段和多字段排序，使用 `sort` 参数指定排序字段和方向。
 
@@ -243,7 +251,7 @@ GET /api/v1/users?sort=status:desc,created_at:desc
 
 详细设计请参考 [排序规范文档](./im_sort_specification.md)
 
-## 13. 查询：分页设计
+### 13. 查询：分页设计
 
 支持偏移分页和游标分页两种方式，适用于不同场景。
 
@@ -259,7 +267,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 
 详细设计请参考 [分页规范文档](./im_pagination_specification.md)
 
-## 14. 查询：搜索设计
+### 14. 查询：搜索设计
 
 支持基础搜索、高级搜索、全文搜索和语义搜索等多种搜索方式。
 
