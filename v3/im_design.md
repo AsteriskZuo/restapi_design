@@ -183,7 +183,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 详细设计请参考 [命名规范文档](./im_naming_conventions.md)
 
-## 10. 响应体格式设计
+## 11. 响应体格式设计
 
 采用标准响应结构，确保数据的一致性和可扩展性，支持分页等高级特性。
 
@@ -208,7 +208,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 ```json
 {
   "error": {
-    "code": "40042020301",
+    "code": "4000301",
     "type": "USER_NOT_FOUND",
     "message": "用户不存在"
   },
@@ -221,7 +221,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的响应格式设请参考 [响应格式设计文档](./im_response_format.md)
 
-## 11. 错误码规范
+## 12. 错误码规范
 
 采用 7 位错误码结构，确保错误信息的准确性和可追踪性。
 
@@ -241,7 +241,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的错误码请参考 [错误码设计文档](./im_error_code.md)
 
-## 12. 查询：排序设计
+## 13. 查询：排序设计
 
 支持单字段和多字段排序，使用 `sort` 参数指定排序字段和方向。
 
@@ -257,7 +257,7 @@ GET /api/v1/users?sort=status:desc,created_at:desc
 
 详细设计请参考 [排序规范文档](./im_sort_specification.md)
 
-## 13. 查询：分页设计
+## 14. 查询：分页设计
 
 支持偏移分页和游标分页两种方式，适用于不同场景。
 
@@ -273,7 +273,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 
 详细设计请参考 [分页规范文档](./im_pagination_specification.md)
 
-## 14. 查询：搜索设计
+## 15. 查询：搜索设计
 
 支持基础搜索、高级搜索、全文搜索和语义搜索等多种搜索方式。
 
@@ -302,7 +302,7 @@ GET /api/v1/messages?chat_id=123&sort=created_at:desc
 
 详见 [排序规范文档](./im_sort_specification.md)
 
-## 15. 批量操作
+## 16. 批量操作
 
 支持原子性和非原子性批量操作，适用于创建、更新、删除和获取等场景。
 
