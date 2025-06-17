@@ -105,3 +105,11 @@ GET /api/v1/messages?sort=created_at:desc
 ```
 GET /api/v1/messages?sort=priority:desc,created_at:desc
 ```
+
+# 关键字命名问题
+
+- sort (推荐, 搜索的关键字 filter、 分页关键字 page、cursor、都没有使用 by，这样可以保持一致的风格)
+- sort_by
+- order_by
+
+**名字选择是非常主观的，所以，我用 AI 统计了各个大厂的使用情况。**

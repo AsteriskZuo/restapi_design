@@ -18,6 +18,8 @@ https://api.easemob.com/v1.2/myorg/myapp/users // 不支持次要版本号
 https://api.easemob.com/v1.2.3/myorg/myapp/users // 不支持补丁版本号
 ```
 
+**详细规范**：完整的 URL 设计规范请参考 [URL 规范文档](./im_url_specification.md)
+
 ## 2. 服务无状态
 
 服务不保存客户端会话状态，每个请求包含所有必要信息，提高可扩展性和可靠性。
@@ -37,7 +39,13 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 
 详细设计请参考 [安全规范文档](./im_security_overview.md)
 
-## 4. HTTP 方法选择
+## 4. 速率限制规则
+
+实施基于身份、IP 和资源的多层级限流等策略，保障系统稳定性和可靠性。
+
+详细设计请参考 [速率限制文档](./im_rate_limiting.md)
+
+## 5. HTTP 方法选择
 
 **CRUD 操作映射**
 
@@ -48,13 +56,13 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 
 **HTTP 方法特性**
 
-| 方法   | 安全性 | 幂等性     | 缓存性     | 主要用途 | 说明                         |
-| ------ | ------ | ---------- | ---------- | -------- | ---------------------------- |
-| GET    | 安全   | 幂等       | 可缓存     | 获取资源 | 不应有副作用                 |
-| POST   | 不安全 | 通常非幂等 | 通常不缓存 | 创建资源 | 可通过幂等键设计为幂等       |
-| PUT    | 不安全 | 幂等       | 条件缓存   | 完整更新 | 响应可在某些情况下缓存       |
-| PATCH  | 不安全 | 取决于实现 | 通常不缓存 | 部分更新 | 设置操作幂等，增量操作非幂等 |
-| DELETE | 不安全 | 幂等       | 条件缓存   | 删除资源 | 重复删除不应报错             |
+| 方法   | 幂等性     | 缓存性     | 主要用途 | 说明                         |
+| ------ | ---------- | ---------- | -------- | ---------------------------- |
+| GET    | 幂等       | 可缓存     | 获取资源 | 不应有副作用                 |
+| POST   | 通常非幂等 | 通常不缓存 | 创建资源 | 可通过幂等键设计为幂等       |
+| PUT    | 幂等       | 条件缓存   | 完整更新 | 响应可在某些情况下缓存       |
+| PATCH  | 取决于实现 | 通常不缓存 | 部分更新 | 设置操作幂等，增量操作非幂等 |
+| DELETE | 幂等       | 条件缓存   | 删除资源 | 重复删除不应报错             |
 
 **安全性说明**:
 
@@ -73,7 +81,7 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 - **不缓存**：响应不应被缓存
 - **条件缓存**：在特定条件下可以缓存
 
-## 5. URL 规范
+## 6. URL 规范
 
 URL 设计遵循 RESTful 原则，确保资源定位的准确性和可读性。
 
@@ -95,7 +103,7 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 
 **详细规范**：完整的 URL 设计规范请参考 [URL 规范文档](./im_url_specification.md)
 
-## 6. 认证方式选择
+## 7. 认证方式选择
 
 推荐使用 JWT Bearer Token，符合 RFC 6750 规范，支持无状态认证和分布式部署。
 
@@ -103,15 +111,21 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## 7. HTTP 头部要求
+## 8. HTTP 头部要求
 
 规范 HTTP 头部使用，确保客户端和服务端正确处理请求内容格式、编码和认证信息。
 
 **基础请求头**
 
 ```http
-accept: application/json
-user-agent: YourApp/1.0
+accept: application/json; charset=utf-8
+user-agent: YourApp/1.0 // 格式和内容，仅供参考
+```
+
+**可选请求头**
+
+```http:
+accept-encoding: gzip, deflate
 ```
 
 **带请求体时**
@@ -132,13 +146,13 @@ authorization: Bearer token123
 content-type: application/json; charset=utf-8
 ```
 
-## 8. 参数规范
+## 9. 参数规范
 
 统一参数传递方式，包括路径参数、查询参数、请求体参数等，支持 UTF-8 编码。
 
 详细设计请参考 [参数规范文档](./im_parameter_specification.md)
 
-## 9. 命名规范
+## 10. 命名规范
 
 统一命名风格，包括 URL、参数、字段等命名规则。
 
@@ -147,7 +161,7 @@ content-type: application/json; charset=utf-8
 ```http
 # URL 命名
 GET /api/v1/users/{userId}/messages
-GET /api/v1/users/{userId}/user-profile
+GET /api/v1/users/{userId}/user_profile
 
 # 请求参数命名
 GET /api/v1/users?status=active&sort=created_at:desc
@@ -209,23 +223,23 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 ## 11. 错误码规范
 
-采用 11 位错误码结构，确保错误信息的准确性和可追踪性。
+采用 7 位错误码结构，确保错误信息的准确性和可追踪性。
 
 **示例：**
 
 ```json
 {
   "error": {
-    "code": "40042020301",
+    "code": "4000301",
     "type": "USER_NOT_FOUND",
     "message": "用户不存在"
   }
 }
 ```
 
-**错误码解析**：`40042020301` = `400`(请求错误) + `42`(业务逻辑模块) + `02`(用户子模块) + `0301`(用户不存在)
+**错误码解析**：`4000301` = `400`(请求错误) + `0301`(用户不存在)
 
-**详细规范**：完整的错误码请参考 [错误码设计文档](./im_detail_error_format.md)
+**详细规范**：完整的错误码请参考 [错误码设计文档](./im_error_code.md)
 
 ## 12. 查询：排序设计
 
@@ -266,14 +280,64 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 **示例：**
 
 ```http
-# 简单搜索
-GET /api/v1/users?filter=status==active
+# 单值搜索（简单搜索模式）
+GET /api/v1/users?status=active
+GET /api/v1/messages?chat_type=single
 
-# 高级搜索
-GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
+# 多值搜索（简单搜索模式）
+GET /api/v1/users?status=active,pending
+GET /api/v1/groups?is_public=true&name=*技术*
 
-# 全局搜索
-GET /api/v1/users?q=zhang&fields=id,name,email
+# 高级搜索（复杂搜索模式）
+GET /api/v1/users?filter=status==active;age=ge=18
+GET /api/v1/messages?filter=(chat_type==single,chat_type==group);content==*重要*
+
+# 搜索+排序
+GET /api/v1/users?status=active&sort=created_at:desc
+GET /api/v1/groups?filter=is_public==true;member_count=ge=10&sort=activity:desc,created_at:desc
+GET /api/v1/messages?chat_id=123&sort=created_at:desc
 ```
 
-详细设计请参考 [搜索规范文档](./im_search_specification.md)
+详见 [搜索规范文档](./im_search_specification.md)
+
+详见 [排序规范文档](./im_sort_specification.md)
+
+## 15. 批量操作
+
+支持原子性和非原子性批量操作，适用于创建、更新、删除和获取等场景。
+
+**示例：**
+
+```http
+# 批量创建
+POST /api/v1/users/batch
+{
+  "batch_mode": "atomic",
+  "data": [
+    { "username": "user1", "email": "user1@example.com" },
+    { "username": "user2", "email": "user2@example.com" }
+  ]
+}
+
+# 批量更新
+PUT /api/v1/users/batch
+{
+  "batch_mode": "non_atomic",
+  "data": [
+    { "id": "user1", "status": "active" },
+    { "id": "user2", "status": "inactive" }
+  ]
+}
+
+# 批量删除
+DELETE /api/v1/users/batch?ids=user1,user2,user3&batch_mode=atomic
+
+# 批量获取
+POST /api/v1/users/batch/get
+{
+  "batch_mode": "non_atomic",
+  "data": ["id1", "id2", "id3"]
+}
+```
+
+详细设计请参考 [批量操作规范文档](./im_batch_specification.md)

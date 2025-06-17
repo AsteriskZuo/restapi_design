@@ -1,3 +1,5 @@
+_本文档主要面向服务程序开发者_
+
 # IM 安全规范总览
 
 本文档定义了 IM 系统的安全规范，包括认证授权、数据安全、访问控制、传输安全和审计监控等核心方面。
@@ -88,8 +90,8 @@
 
 ## 7. 相关文档
 
-- [认证与授权规范](./im_authentication.md)
-- [数据安全规范](./im_data_security.md)
-- [访问控制规范](./im_access_control.md)
-- [传输安全规范](./im_transport_security.md)
-- [审计与监控规范](./im_audit_security.md)
+- [认证与授权规范](./security/im_authentication.md)
+- [数据安全规范](./security/im_data_security.md)
+- [访问控制规范](./security/im_access_control.md)
+- [传输安全规范](./security/im_transport_security.md)
+- [审计与监控规范](./security/im_audit_security.md)

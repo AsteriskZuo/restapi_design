@@ -4,17 +4,16 @@
 
 ## 1. 响应格式构成规则
 
-**标准响应结构 = 核心数据(data) + 元数据(meta) + 可选字段(links/included/warnings)**
+**标准响应结构 = 核心数据(data)/错误信息(error) + 元数据(meta) + 可选字段(included)**
 
 **分层结构：**
 
-- **data 字段**：包含实际的业务数据（必需）
+- **data 字段**：包含实际的业务数据（成功响应必需）
+- **error 字段**：包含错误信息（失败响应必需）
 - **meta 字段**：包含响应元数据信息（推荐）
-- **links 字段**：HATEOAS 相关链接（可选）
 - **included 字段**：关联资源数据，避免 N+1 查询（可选）
-- **warnings 字段**：非致命性警告信息（可选）
 
-### 1.1 requestId 生成规则
+### 1.1 requestId 生成规则(仅供参考)
 
 确保请求唯一性和可追踪性，支持分布式环境下的请求标识和问题排查。
 
@@ -80,7 +79,20 @@ msg1704110400012abc456def78901  # 消息模块请求
 - **空结果**：null 或空数组
 - **简单值**：字符串、数字等基本类型
 
-### 2.2 元数据字段 (meta)
+### 2.2 错误字段 (error)
+
+**用途**：请求失败时的错误信息
+**类型**：对象
+**必需性**：所有失败响应必需
+
+**核心子字段：**
+
+- **code**：错误代码（业务错误码）
+- **type**：错误类型（枚举值）
+- **message**：用户友好的错误消息
+- **details**：详细错误信息对象或者字符串（可选）
+
+### 2.3 元数据字段 (meta)
 
 **用途**：响应相关的元数据信息
 **类型**：对象
@@ -93,31 +105,11 @@ msg1704110400012abc456def78901  # 消息模块请求
 - **responseTime**：响应耗时（可选）
 - **pagination**：分页信息（分页查询时必需）
 
-### 2.3 链接字段 (links)
-
-**用途**：HATEOAS 超媒体链接
-**标准**：符合 HAL 规范
-**场景**：RESTful API 完整实现
-
-**常用链接类型：**
-
-- **self**：当前资源链接
-- **edit**：编辑资源链接
-- **delete**：删除资源链接
-- **related**：相关资源链接
-- **pagination**：分页导航链接
-
 ### 2.4 包含字段 (included)
 
 **用途**：避免 N+1 查询的关联数据
 **标准**：JSON:API 规范
 **场景**：复杂关联查询优化
-
-### 2.5 警告字段 (warnings)
-
-**用途**：非致命性提醒信息
-**类型**：数组
-**场景**：兼容性警告、弃用提醒
 
 ## 3. IM 业务场景响应示例
 
@@ -137,11 +129,6 @@ msg1704110400012abc456def78901  # 消息模块请求
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "aut1704110400456abc123def78912"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/auth/login",
-    "refresh": "https://api.example.com/v1/auth/refresh",
-    "logout": "https://api.example.com/v1/auth/logout"
   }
 }
 ```
@@ -201,12 +188,6 @@ msg1704110400012abc456def78901  # 消息模块请求
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "usr1704110400123def456ghi78901"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/users/123",
-    "edit": "https://api.example.com/v1/users/123",
-    "avatar": "https://api.example.com/v1/users/123/avatar",
-    "friends": "https://api.example.com/v1/users/123/friends"
   }
 }
 ```
@@ -240,12 +221,6 @@ msg1704110400012abc456def78901  # 消息模块请求
     },
     "timestamp": 1704110400000,
     "requestId": "usr1704110400234ghi567abc12345"
-  },
-  "links": {
-    "first": "https://api.example.com/v1/users?page=1&limit=10",
-    "last": "https://api.example.com/v1/users?page=16&limit=10",
-    "next": "https://api.example.com/v1/users?page=2&limit=10",
-    "self": "https://api.example.com/v1/users?page=1&limit=10"
   }
 }
 ```
@@ -265,10 +240,6 @@ msg1704110400012abc456def78901  # 消息模块请求
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "usr1704110400345abc678def12345"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/users/125",
-    "edit": "https://api.example.com/v1/users/125"
   }
 }
 ```
@@ -297,12 +268,6 @@ msg1704110400012abc456def78901  # 消息模块请求
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "grp1704110400456def789ghi12345"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/groups/group_001",
-    "members": "https://api.example.com/v1/groups/group_001/members",
-    "messages": "https://api.example.com/v1/groups/group_001/messages",
-    "join": "https://api.example.com/v1/groups/group_001/join"
   },
   "included": [
     {
@@ -379,10 +344,6 @@ msg1704110400012abc456def78901  # 消息模块请求
     "timestamp": 1704110400000,
     "requestId": "msg1704110400678def901abc67890",
     "responseTime": "150ms"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/messages/msg_789",
-    "recall": "https://api.example.com/v1/messages/msg_789/recall"
   }
 }
 ```
@@ -419,10 +380,6 @@ msg1704110400012abc456def78901  # 消息模块请求
     },
     "timestamp": 1704110700000,
     "requestId": "msg1704110700789ghi012def78901"
-  },
-  "links": {
-    "next": "https://api.example.com/v1/messages/history?page=2&limit=50",
-    "self": "https://api.example.com/v1/messages/history?page=1&limit=50"
   }
 }
 ```
@@ -490,11 +447,6 @@ msg1704110400012abc456def78901  # 消息模块请求
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "req1704110400901def234abc78901"
-  },
-  "links": {
-    "self": "https://api.example.com/v1/files/upload/upload_task_456",
-    "cancel": "https://api.example.com/v1/files/upload/upload_task_456/cancel",
-    "result": "https://api.example.com/v1/files/file_123"
   }
 }
 ```
@@ -530,33 +482,5 @@ msg1704110400012abc456def78901  # 消息模块请求
     "timestamp": 1704110700000,
     "requestId": "usr1704110400123abc456def78901"
   }
-}
-```
-
-### 3.8 带警告的响应
-
-#### 使用已弃用字段
-
-```json
-{
-  "data": {
-    "userId": 123,
-    "username": "zhangsan",
-    "nickname": "张三",
-    "old_field": "deprecated_value"
-  },
-  "meta": {
-    "timestamp": 1704110700000,
-    "requestId": "usr1704110700234def567ghi89012"
-  },
-  "warnings": [
-    {
-      "code": "DEPRECATED_FIELD",
-      "message": "字段 'old_field' 已弃用，请使用 'new_field' 替代",
-      "field": "old_field",
-      "deprecatedSince": "v1.2.0",
-      "removeIn": "v2.0.0"
-    }
-  ]
 }
 ```

@@ -8,38 +8,86 @@
 
 ## 2. 搜索规范
 
-### 2.1 基础分类
+### 2.1 搜索模式概述
 
-**用途**：数据查询和过滤
-**场景**：GET 请求
-**限制**：避免敏感信息、控制查询复杂度
+**设计理念**：提供两种搜索模式，满足从简单到复杂的不同场景需求
+**核心标识**：`filter` 关键字作为启用专业语法的标记
+**适用场景**：所有 GET 请求的数据查询和过滤
 
-**搜索类型：**
+**模式分类：**
 
-1. **基础搜索（简单过滤）**
+1. **简单搜索模式**：无 `filter` 关键字，使用直观的参数名查询
+2. **复杂搜索模式**：使用 `filter` 关键字，启用完整 RSQL/FIQL 语法
 
-   - 精确匹配：`status==active`
-   - 范围过滤：`age=ge=18;age=lt=65`
-   - 多值过滤：`status=in=(active,pending)`
-   - 布尔过滤：`is_online==true`
+### 2.2 简单搜索模式
 
-2. **高级搜索（复杂条件）**
+**特征**：
 
-   - 组合条件：`(age=gt=18;age=lt=65);(status==active,status==pending)`
-   - 嵌套字段：`profile.age=ge=18;address.city==beijing`
-   - 关联查询：`group.member_count=gt=10`
+- 不使用 `filter` 参数
+- 直接使用字段名作为查询参数
+- 语法简单，易于理解和使用
 
-3. **全文搜索**
+**支持能力**：
 
-   - 关键词搜索：`q=zhang`
-   - 模糊匹配：`name==*zhang*;email==*@gmail.com`
-   - 多字段搜索：`(name==*zhang*,nickname==*zhang*)`
+- 最多支持 3 个字段同时搜索
+- 支持精确匹配和排除匹配
+- 字段间默认为 AND 逻辑关系
+- 支持多值查询和基础模糊匹配
 
-4. **语义搜索**
-   - 相似度搜索：`description~=技术交流`
-   - 智能推荐：`recommend=true`
+**操作符规则**：
 
-### 2.2 操作符规范
+- **相等匹配**：`status=active`（等同于 `status==active`）
+- **排除匹配**：`status=!deleted`（使用 `!` 前缀表示不等于）
+- **多值查询**：`status=active,pending`（等同于 `status=in=(active,pending)`）
+- **模糊匹配**：`name=*zhang*`（使用 `*` 表示通配符）
+
+**示例**：
+
+```
+GET /api/v1/users?status=active
+GET /api/v1/users?status=active&age=25
+GET /api/v1/users?status=active&age=25&city=beijing
+GET /api/v1/users?status=active,pending&name=*zhang*
+```
+
+**使用限制**：
+
+- 不支持范围查询（大于、小于等）
+- 不支持 OR 逻辑组合
+- 不支持复杂的括号分组
+- 不支持嵌套字段查询
+
+### 2.3 复杂搜索模式（可选）
+
+**特征**：
+
+- 必须使用 `filter` 参数
+- 启用完整的 RSQL/FIQL 语法规范
+- 支持所有高级搜索功能
+
+**支持能力**：
+
+- 支持所有操作符和逻辑组合
+- 支持嵌套字段和关联查询
+- 无字段数量限制
+- 支持复杂的条件分组
+
+**示例**：
+
+```
+GET /api/v1/users?filter=status==active;age=ge=18
+GET /api/v1/users?filter=(status==active,status==pending);age=gt=18;age=lt=65
+GET /api/v1/users?filter=profile.age=ge=18;address.city==beijing
+```
+
+**冲突处理**：
+
+- **互斥原则**：不能同时使用两种模式
+- **优先级**：如果同时存在 `filter` 和其他字段参数，`filter` 优先，其他参数被忽略
+
+### 2.4 操作符规范
+
+**适用范围**：仅用于复杂搜索模式（Filter）
 
 **主要操作符：**
 
@@ -54,9 +102,10 @@
 | `=in=`  | 包含     | `status=in=(active,pending)`  | 多值过滤 |
 | `=out=` | 不包含   | `status=out=(deleted,banned)` | 多值排除 |
 | `==*`   | 模糊匹配 | `name==*zhang*`               | 模糊搜索 |
-| `~=`    | 相似度   | `description~=技术交流`       | 语义搜索 |
 
-### 2.3 逻辑组合
+### 2.5 逻辑组合
+
+**适用范围**：仅用于复杂搜索模式（Filter）
 
 **AND 逻辑**：使用分号（`;`）分隔
 
@@ -76,7 +125,7 @@ GET /api/v1/users?filter=status==active,status==pending
 GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
 ```
 
-### 2.4 性能优化
+### 2.6 性能优化
 
 **查询优化：**
 
@@ -96,48 +145,85 @@ GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
 
 ### 3.1 用户搜索
 
-**基础过滤：**
+**简单搜索示例：**
 
 ```
+# 单字段搜索
+GET /api/v1/users?status=active
+
+# 多字段搜索
+GET /api/v1/users?status=active&city=beijing
+
+# 多值查询
+GET /api/v1/users?status=active,pending
+
+# 模糊搜索
+GET /api/v1/users?nickname=*zhang*
+```
+
+**复杂搜索示例：**
+
+```
+# 基础过滤
 GET /api/v1/users?filter=status==active;is_online==true
-```
 
-**高级搜索：**
-
-```
+# 高级搜索
 GET /api/v1/users?filter=(age=ge=18;age=lt=65);(status==active,status==pending);city==beijing
-```
 
-**全文搜索：**
-
-```
-GET /api/v1/users?q=zhang&fields=id,name,email
+# 嵌套字段搜索
+GET /api/v1/users?filter=profile.age=ge=18;profile.verified==true
 ```
 
 ### 3.2 群组搜索
 
-**群组过滤：**
+**简单搜索示例：**
 
 ```
+# 公共群组
+GET /api/v1/groups?is_public=true
+
+# 按名称搜索
+GET /api/v1/groups?name=*技术*
+```
+
+**复杂搜索示例：**
+
+```
+# 复杂条件过滤
 GET /api/v1/groups?filter=is_public==true;member_count=ge=10
-```
 
-**群组搜索：**
-
-```
-GET /api/v1/groups?filter=name==*技术*;description==*交流*
+# 组合搜索
+GET /api/v1/groups?filter=name==*技术*;description==*交流*;member_count=gt=5
 ```
 
 ### 3.3 消息搜索
 
-**消息过滤：**
+**简单搜索示例：**
 
 ```
+# 按会话类型搜索
+GET /api/v1/messages?chat_type=single
+
+# 按内容模糊搜索
+GET /api/v1/messages?content=*会议*
+```
+
+**复杂搜索示例：**
+
+```
+# 精确过滤
 GET /api/v1/messages?filter=chat_type==single;chat_id==user_123
+
+# 时间范围搜索
+GET /api/v1/messages?filter=content==*会议*;created_at=ge=2024-01-01;created_at=lt=2024-12-31
+
+# 组合条件搜索
+GET /api/v1/messages?filter=(chat_type==single,chat_type==group);content==*重要*
 ```
 
-**消息搜索：**
+# 关键字命名问题
 
-```
-GET /api/v1/messages?filter=content==*会议*;created_at=ge=2024-01-01
-```
+- search
+- filter (推荐理由: sendbird/getsteam/tencent 都使用 filter)
+
+名字选择是非常主观的，所以，我用 AI 统计了各个大厂的使用情况， [详见](./cursor_sort_vs_orderby_keyword_preferen.md)

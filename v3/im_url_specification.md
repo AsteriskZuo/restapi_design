@@ -24,15 +24,17 @@
 
 **环信 REST 接口示例：**
 
+_仅供参考_
+
 ```http
-https://{host}/{version}/{org_name}/{app_name}/auth
-https://{host}/{version}/{org_name}/{app_name}/users
-https://{host}/{version}/{org_name}/{app_name}/groups
-https://{host}/{version}/{org_name}/{app_name}/rooms
-https://{host}/{version}/{org_name}/{app_name}/messages
-https://{host}/{version}/{org_name}/{app_name}/messages/threads
-https://{host}/{version}/{org_name}/{app_name}/messages/reactions
-https://{host}/{version}/{org_name}/{app_name}/push
+https://{host}/{version}/{org_id}/{app_id}/auth
+https://{host}/{version}/{org_id}/{app_id}/users
+https://{host}/{version}/{org_id}/{app_id}/groups
+https://{host}/{version}/{org_id}/{app_id}/groups/threads // ??? 仅供参考
+https://{host}/{version}/{org_id}/{app_id}/rooms
+https://{host}/{version}/{org_id}/{app_id}/messages
+https://{host}/{version}/{org_id}/{app_id}/messages/reactions
+https://{host}/{version}/{org_id}/{app_id}/push
 ```
 
 **完整 URL 示例：**
@@ -64,15 +66,15 @@ https://api.dev-a61.easemob.com/v1/myorg/myapp/users   // 沙箱环境
 
 ### 2.4 组织名规范
 
-- **格式**：`/{org_name}`
+- **格式**：`/{org_id}`
 - **示例**：`/myorg`、`/testorg`
-- **规则**：使用有意义的名称
+- **规则**：系统分配，用户无法修改
 
 ### 2.5 应用名规范
 
-- **格式**：`/{app_name}`
+- **格式**：`/{app_id}`
 - **示例**：`/myapp`、`/testapp`
-- **规则**：使用有意义的名称
+- **规则**：系统分配，用户无法修改
 
 ### 2.6 资源路径规范
 
