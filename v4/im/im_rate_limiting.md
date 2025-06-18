@@ -81,16 +81,8 @@ x-ratelimit-reset-tokens: 6m0s        # 令牌限制重置前的剩余时间
 ```json
 {
   "error": {
-    "code": "429",
-    "type": "rate_limit_exceeded",
+    "code": 4290000,
     "message": "请求过于频繁，请稍后再试",
-    "details": {
-      "limit_type": "rpm",
-      "limit": 100,
-      "remaining": 0,
-      "reset_at": "2023-06-01T12:00:10Z",
-      "retry_after": 60
-    }
   }
 }
 ```

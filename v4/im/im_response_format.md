@@ -4,16 +4,78 @@
 
 ## 1. 响应格式构成规则
 
-**标准响应结构 = 核心数据(data)/错误信息(error) + 元数据(meta) + 可选字段(included)**
+**标准响应结构 = 核心数据(data)/错误信息(error) + 元数据(meta)**
 
 **分层结构：**
 
 - **data 字段**：包含实际的业务数据（成功响应必需）
 - **error 字段**：包含错误信息（失败响应必需）
 - **meta 字段**：包含响应元数据信息（推荐）
-- **included 字段**：关联资源数据，避免 N+1 查询（可选）
 
-### 1.1 requestId 生成规则(仅供参考)
+**基础示例：**
+
+```json
+{
+  "data": { "id": 123, "name": "张三" },
+  "meta": {
+    "timestamp": 1704110400000,
+    "requestId": "req1704110400012abc456def78901"
+  }
+}
+```
+
+## 2. 字段分类定义
+
+### 2.1 核心字段 (data)
+
+**用途**：包含实际业务数据
+**类型**：对象、数组、基本类型或 null
+**必需性**：所有成功响应必需
+
+**数据类型规则：**
+
+- **单个资源**：对象格式
+- **资源列表**：数组格式
+- **空结果**：null 或空数组
+
+**data 为空 示例：**
+
+```json
+{
+  "data": null,
+  "meta": {
+    "timestamp": 1704110400000,
+    "requestId": "req1704110400012abc456def78901"
+  }
+}
+```
+
+### 2.2 错误字段 (error)
+
+**用途**：请求失败时的错误信息
+**类型**：对象
+**必需性**：所有失败响应必需
+
+**核心子字段：**
+
+- **code**：错误代码（业务错误码）
+- **message**：用户友好的错误消息
+
+### 2.3 元数据字段 (meta)
+
+**用途**：响应相关的元数据信息
+**类型**：对象
+**必需性**：强烈推荐包含
+
+**核心子字段：**
+
+- **timestamp**：响应生成时间（毫秒级时间戳）
+- **requestId**：请求追踪标识
+- **responseTime**：响应耗时（可选）
+
+## 3. 最佳实践
+
+### 3.1 requestId 生成规则(仅供参考)
 
 确保请求唯一性和可追踪性，支持分布式环境下的请求标识和问题排查。
 
@@ -52,75 +114,53 @@ grp1704110400789ghi123abcdef56  # 群组模块请求
 msg1704110400012abc456def78901  # 消息模块请求
 ```
 
-**基础示例：**
+### 3.2 meta 参数
+
+推荐在 IM 业务场景中 在 meta 中包含一些元数据信息，如请求时间、请求 ID 等，方便后续问题排查和跟踪。
 
 ```json
 {
-  "data": { "id": 123, "name": "张三" },
+  "data": {
+    "userId": "123",
+    "username": "zhangsan"
+  },
   "meta": {
     "timestamp": 1704110400000,
-    "requestId": "req1704110400012abc456def78901"
+    "requestId": "aut1704110400456abc123def78912"
   }
 }
 ```
 
-## 2. 字段分类定义
+### 3.3 error 参数
 
-### 2.1 核心字段 (data)
+推荐在 IM 业务场景中 在 error 中包含一些错误信息，如错误码、错误信息等，方便后续问题排查和跟踪。
 
-**用途**：包含实际业务数据
-**类型**：对象、数组、基本类型或 null
-**必需性**：所有成功响应必需
+- `error.code`: 错误码(整数)
+- `error.message`: 错误信息(字符串，或者 json 的序列化的字符串等)
 
-**数据类型规则：**
+```json
+{
+  "error": {
+    "code": 4010101,
+    "message": "用户名或密码错误"
+  },
+  "meta": {
+    "timestamp": 1704110400000,
+    "requestId": "aut1704110400789def456abc12345"
+  }
+}
+```
 
-- **单个资源**：对象格式
-- **资源列表**：数组格式
-- **空结果**：null 或空数组
-- **简单值**：字符串、数字等基本类型
+## 4. IM 业务场景响应示例
 
-### 2.2 错误字段 (error)
-
-**用途**：请求失败时的错误信息
-**类型**：对象
-**必需性**：所有失败响应必需
-
-**核心子字段：**
-
-- **code**：错误代码（业务错误码）
-- **type**：错误类型（枚举值）
-- **message**：用户友好的错误消息
-- **details**：详细错误信息对象或者字符串（可选）
-
-### 2.3 元数据字段 (meta)
-
-**用途**：响应相关的元数据信息
-**类型**：对象
-**必需性**：强烈推荐包含
-
-**核心子字段：**
-
-- **timestamp**：响应生成时间（毫秒级时间戳）
-- **requestId**：请求追踪标识
-- **responseTime**：响应耗时（可选）
-- **pagination**：分页信息（分页查询时必需）
-
-### 2.4 包含字段 (included)
-
-**用途**：避免 N+1 查询的关联数据
-**标准**：JSON:API 规范
-**场景**：复杂关联查询优化
-
-## 3. IM 业务场景响应示例
-
-### 3.1 auth 认证模块
+### 4.1 auth 认证模块
 
 #### 用户登录成功
 
 ```json
 {
   "data": {
-    "userId": 123,
+    "userId": "123",
     "username": "zhangsan",
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expiresIn": 7200,
@@ -138,13 +178,8 @@ msg1704110400012abc456def78901  # 消息模块请求
 ```json
 {
   "error": {
-    "code": "40141010101",
-    "type": "AUTHENTICATION_FAILED",
-    "message": "用户名或密码错误",
-    "details": {
-      "field": "password",
-      "reason": "密码验证失败"
-    }
+    "code": 4010101,
+    "message": "用户名或密码错误"
   },
   "meta": {
     "timestamp": 1704110400000,
@@ -169,14 +204,14 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.2 users 用户模块
+### 4.2 users 用户模块
 
 #### 单个用户查询
 
 ```json
 {
   "data": {
-    "userId": 123,
+    "userId": "123",
     "username": "zhangsan",
     "nickname": "张三",
     "email": "zhangsan@example.com",
@@ -198,13 +233,13 @@ msg1704110400012abc456def78901  # 消息模块请求
 {
   "data": [
     {
-      "userId": 123,
+      "userId": "123",
       "username": "zhangsan",
       "nickname": "张三",
       "status": "online"
     },
     {
-      "userId": 124,
+      "userId": "124",
       "username": "lisi",
       "nickname": "李四",
       "status": "offline"
@@ -230,7 +265,7 @@ msg1704110400012abc456def78901  # 消息模块请求
 ```json
 {
   "data": {
-    "userId": 125,
+    "userId": "125",
     "username": "wangwu",
     "nickname": "王五",
     "email": "wangwu@example.com",
@@ -244,7 +279,7 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.3 groups 群组模块
+### 4.3 groups 群组模块
 
 #### 群组详情查询（包含成员信息）
 
@@ -261,32 +296,14 @@ msg1704110400012abc456def78901  # 消息模块请求
     "createdAt": 1704096000000,
     "ownerId": 123,
     "members": [
-      { "userId": 123, "role": "owner" },
-      { "userId": 124, "role": "admin" }
+      { "userId": "123", "role": "owner" },
+      { "userId": "124", "role": "admin" }
     ]
   },
   "meta": {
     "timestamp": 1704110400000,
     "requestId": "grp1704110400456def789ghi12345"
-  },
-  "included": [
-    {
-      "type": "user",
-      "id": 123,
-      "attributes": {
-        "username": "zhangsan",
-        "nickname": "张三"
-      }
-    },
-    {
-      "type": "user",
-      "id": 124,
-      "attributes": {
-        "username": "lisi",
-        "nickname": "李四"
-      }
-    }
-  ]
+  }
 }
 ```
 
@@ -323,7 +340,7 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.4 messages 消息模块
+### 4.4 messages 消息模块
 
 #### 发送消息成功
 
@@ -384,22 +401,22 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.5 批量操作响应
+### 4.5 批量操作响应
 
 #### 批量添加群成员
 
 ```json
 {
   "data": {
-    "successful": [
+    "success": [
       {
-        "userId": 126,
+        "userId": "126",
         "username": "user1",
         "status": "added",
         "joinedAt": 1704110400000
       },
       {
-        "userId": 127,
+        "userId": "127",
         "username": "user2",
         "status": "added",
         "joinedAt": 1704110400000
@@ -407,11 +424,10 @@ msg1704110400012abc456def78901  # 消息模块请求
     ],
     "failed": [
       {
-        "userId": 128,
+        "userId": "128",
         "username": "user3",
         "error": {
-          "code": "40342030202",
-          "type": "MEMBER_LIMIT_EXCEEDED",
+          "code": 4030202,
           "message": "群成员数量已达上限"
         }
       }
@@ -421,7 +437,7 @@ msg1704110400012abc456def78901  # 消息模块请求
     "summary": {
       "totalCount": 3,
       "successCount": 2,
-      "failureCount": 1
+      "failedCount": 1
     },
     "timestamp": 1704110400000,
     "requestId": "grp1704110400890abc123ghi45678"
@@ -429,7 +445,7 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.6 异步操作响应
+### 4.6 异步操作响应
 
 #### 文件上传（异步处理）
 
@@ -451,7 +467,7 @@ msg1704110400012abc456def78901  # 消息模块请求
 }
 ```
 
-### 3.7 空结果响应
+### 4.7 空结果响应
 
 #### 空消息列表
 

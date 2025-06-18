@@ -29,25 +29,29 @@
 
 **支持能力**：
 
-- 最多支持 3 个字段同时搜索
-- 支持精确匹配和排除匹配
-- 字段间默认为 AND 逻辑关系
-- 支持多值查询和基础模糊匹配
+- 支持精确匹配
+- 支持排除匹配
+- 支持模糊匹配
+- 支持多值匹配
+- 支持多字段联合查询，字段间使用 `&` 连接，表示两个字段之间是 AND 关系 // todo: 不合理，建议使用 `;`
+- 支持多字段联合查询，字段间使用 `|` 连接，表示两个字段之间是 OR 关系 // todo: 不合理，建议使用 `,`
 
 **操作符规则**：
 
-- **相等匹配**：`status=active`（等同于 `status==active`）
-- **排除匹配**：`status=!deleted`（使用 `!` 前缀表示不等于）
-- **多值查询**：`status=active,pending`（等同于 `status=in=(active,pending)`）
-- **模糊匹配**：`name=*zhang*`（使用 `*` 表示通配符）
+- **相等匹配**：`status==active`（简写形式可用 `status=active`）
+- **排除匹配**：`status!=deleted`（使用 `!=` 表示不等于）
+- **多值查询**：`status==active,pending`（等同于 `status=in=(active,pending)`）
+- **模糊匹配**：`name==*zhang*`（使用 `*` 表示通配符）
+- **联合与匹配**： // todo:
+- **联合或匹配**： // todo:
 
 **示例**：
 
 ```
-GET /api/v1/users?status=active
-GET /api/v1/users?status=active&age=25
-GET /api/v1/users?status=active&age=25&city=beijing
-GET /api/v1/users?status=active,pending&name=*zhang*
+GET /api/v1/users?status==active
+GET /api/v1/users?status==active&age==25
+GET /api/v1/users?status==active&age==25&city==beijing
+GET /api/v1/users?status==active,pending&name==*zhang*
 ```
 
 **使用限制**：
@@ -103,6 +107,8 @@ GET /api/v1/users?filter=profile.age=ge=18;address.city==beijing
 | `=out=` | 不包含   | `status=out=(deleted,banned)` | 多值排除 |
 | `==*`   | 模糊匹配 | `name==*zhang*`               | 模糊搜索 |
 
+**注意** 操作符 `=`,`!`,`*` 需要编码，[detail](https://developer.mozilla.org/zh-CN/docs/Glossary/Percent-encoding)
+
 ### 2.5 逻辑组合
 
 **适用范围**：仅用于复杂搜索模式（Filter）
@@ -120,6 +126,8 @@ GET /api/v1/users?filter=status==active,status==pending
 ```
 
 **复杂组合**：使用圆括号（`()`）分组
+
+_非必要不使用_
 
 ```
 GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
@@ -149,16 +157,16 @@ GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
 
 ```
 # 单字段搜索
-GET /api/v1/users?status=active
+GET /api/v1/users?status==active
 
 # 多字段搜索
-GET /api/v1/users?status=active&city=beijing
+GET /api/v1/users?status==active&city==beijing
 
 # 多值查询
-GET /api/v1/users?status=active,pending
+GET /api/v1/users?status==active,pending
 
 # 模糊搜索
-GET /api/v1/users?nickname=*zhang*
+GET /api/v1/users?nickname==*zhang*
 ```
 
 **复杂搜索示例：**
@@ -180,10 +188,10 @@ GET /api/v1/users?filter=profile.age=ge=18;profile.verified==true
 
 ```
 # 公共群组
-GET /api/v1/groups?is_public=true
+GET /api/v1/groups?is_public==true
 
 # 按名称搜索
-GET /api/v1/groups?name=*技术*
+GET /api/v1/groups?name==*技术*
 ```
 
 **复杂搜索示例：**
@@ -202,10 +210,10 @@ GET /api/v1/groups?filter=name==*技术*;description==*交流*;member_count=gt=5
 
 ```
 # 按会话类型搜索
-GET /api/v1/messages?chat_type=single
+GET /api/v1/messages?chat_type==single
 
 # 按内容模糊搜索
-GET /api/v1/messages?content=*会议*
+GET /api/v1/messages?content==*会议*
 ```
 
 **复杂搜索示例：**
@@ -221,9 +229,32 @@ GET /api/v1/messages?filter=content==*会议*;created_at=ge=2024-01-01;created_a
 GET /api/v1/messages?filter=(chat_type==single,chat_type==group);content==*重要*
 ```
 
+## 4. 最佳实践
+
+### 4.1 限制搜索数量
+
+建议在请求体里面添加 limit 或者 count 等字段，限制搜索数量， 降低服务器压力。
+
+### 4.2 搜索结果标记
+
+如果是分页或者游标搜索，那么可能需要多次请求和响应，建议添加 isFinished 等字段，表示搜索是否完成。
+
+### 4.3 模糊搜索
+
+- 使用标记表示这是模糊搜索 // todo: 如果是多个字段，指定那个字段是模糊搜索呢？
+- 模糊搜索仅支持单字段，不能同时支持多个字段。例如：支持 `name` 和 `age` 两个字段模糊搜索
+
 # 关键字命名问题
 
 - search
 - filter (推荐理由: sendbird/getsteam/tencent 都使用 filter)
 
 名字选择是非常主观的，所以，我用 AI 统计了各个大厂的使用情况， [详见](./cursor_sort_vs_orderby_keyword_preferen.md)
+
+# 参考文档
+
+tentcent 采用哪种搜索规范？ [detail](https://cloud.tencent.com/document/product/1709/112947)
+
+rongcloud 采用哪种搜索规范？[detail](https://docs.rongcloud.cn/not_existed)
+
+rsql 实际项目？[detail](https://github.com/search?q=RSQL&type=repositories) // todo: java 757 star

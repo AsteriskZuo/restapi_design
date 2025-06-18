@@ -174,3 +174,66 @@ X-Request-ID: req125
 ```
 
 错误码响应格式，[详见](./im_response_format.md)
+
+## 7. 最佳实践
+
+在 IM 业务中，建议 产品设计文档、开发 HLD 文档、restapi 接口说明、sdk 接口说明、集成文档、测试文档等文档中保持**术语一致**。 例如：用户术语使用 user（当前有 account、user、contact 等），群组术语使用 group（当前有 group、chatgroup 等）。
+
+### 7.1 唯一标识符
+
+用户 ID、群组 ID、聊天室 ID、消息 ID、文件 ID、群成员 ID 等，建议使用 Id 作为名称的后缀。
+
+推荐 ✅
+例如：userId，groupId、roomId、messageId、fileId、memberId。
+
+不推荐 ❌
+例如：userName，groupName。
+
+### 7.2 名字
+
+用户名、群组名、聊天室名、消息名、文件名、群成员名等，建议使用 Name 作为名称的后缀。
+
+推荐 ✅
+例如：userName，groupName。
+
+不推荐 ❌
+例如：user，group。
+
+### 7.3 备注（昵称）
+
+好友昵称、群组备注、聊天室备注、群成员昵称等，建议使用 Remark 作为名称的后缀。 （当前有 nickName 等）
+
+推荐 ✅
+例如：userRemark，groupRemark, memberRemark。
+
+### 7.4 时间戳
+
+统一采用 毫秒级为单位的时间戳（`1704110400000`），建议使用 timestamp 作为名称的后缀。
+
+推荐 ✅
+例如：timestamp， serverTimestamp, LocalTimestamp。
+
+### 7.5 状态
+
+用户状态、消息状态、文件状态等，建议使用 Status 作为名称的后缀。
+
+### 7.6 其它关键字
+
+资源的动作关键字，增删改查，例如：add、delete、update、delete 等。 (资源包括、用户、群组、聊天室 等)
+
+资源的更新方式：updateToLocal, updateToServer 等。（SDK 参考）
+资源的获取方式：getFromLocal, getFromServer 等。（SDK 参考）
+
+消息的动作关键字，例如：send、receive、delete、recall、forward、update、insert、get、fetch 等。
+消息的类型枚举值，例如：text、image、file、location、voice、video、custom 等。
+消息的角色关键字，例如：senderId、receiverId、conversionId 等。
+
+会话的特有关键字，例如：mute、unmute、pin、unpin、read、unread 等。
+
+群组的特有关键字，例如：thread、reaction 等。
+
+# 参考文档
+
+[tencent_user_naming](https://cloud.tencent.com/document/product/269/38417)
+
+[tencent_group_naming](https://cloud.tencent.com/document/product/269/1615#.E8.AF.B7.E6.B1.82.E5.8C.85.E7.A4.BA.E4.BE.8B)

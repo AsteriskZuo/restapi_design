@@ -513,13 +513,8 @@
 ```json
 {
   "error": {
-    "code": "40141010101",
-    "type": "AUTHENTICATION_FAILED",
+    "code": 4010101,
     "message": "用户名或密码错误",
-    "details": {
-      "field": "password",
-      "reason": "密码验证失败"
-    }
   },
   "meta": {
     "timestamp": 1704110400000,
