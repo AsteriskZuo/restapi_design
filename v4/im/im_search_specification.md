@@ -104,8 +104,6 @@ GET /api/v1/users?filter=profile.age=ge=18;address.city==beijing
 
 **注意** 操作符 `=`,`!`,`*` 需要编码，[detail](https://developer.mozilla.org/zh-CN/docs/Glossary/Percent-encoding)
 
-[RSQL/FIQL 语法规范](https://github.com/imsys/IM-Specification/blob/master/IM_Search_Specification.md#rsqlfiql-语法规范)
-
 ### 2.5 逻辑组合
 
 **适用范围**：仅用于复杂搜索模式（Filter）
@@ -282,11 +280,3 @@ rongcloud 采用哪种搜索规范？[detail](https://docs.rongcloud.cn/not_exis
 rsql 实际项目？[detail](https://github.com/search?q=RSQL&type=repositories) // java 757 star
 
 RSQL 规范？ [detail](https://www.here.com/docs/bundle/data-client-library-developer-guide-java-scala/page/client/rsql.html)
-
-# RSQL 语法解析器示例
-
-## java
-
-## javascript
-
-## python
