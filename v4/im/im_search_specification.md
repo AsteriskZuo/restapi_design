@@ -16,7 +16,7 @@
 
 **模式分类：**
 
-1. **简单搜索模式**：无 `filter` 关键字，使用直观的参数名查询
+1. **简单搜索模式**：无 `filter` 关键字，使用直观的参数名查询，不支持 大于（大于等于）、小于（小于等于）、包含、不包含、嵌套等复杂操作
 2. **复杂搜索模式**：使用 `filter` 关键字，启用完整 RSQL/FIQL 语法
 
 ### 2.2 简单搜索模式
@@ -30,33 +30,29 @@
 **支持能力**：
 
 - 支持精确匹配
-- 支持排除匹配
-- 支持模糊匹配
 - 支持多值匹配
-- 支持多字段联合查询，字段间使用 `&` 连接，表示两个字段之间是 AND 关系 // todo: 不合理，建议使用 `;`
-- 支持多字段联合查询，字段间使用 `|` 连接，表示两个字段之间是 OR 关系 // todo: 不合理，建议使用 `,`
+- 支持多字段联合查询
 
 **操作符规则**：
 
-- **相等匹配**：`status==active`（简写形式可用 `status=active`）
-- **排除匹配**：`status!=deleted`（使用 `!=` 表示不等于）
-- **多值查询**：`status==active,pending`（等同于 `status=in=(active,pending)`）
-- **模糊匹配**：`name==*zhang*`（使用 `*` 表示通配符）
-- **联合与匹配**： // todo:
-- **联合或匹配**： // todo:
+- **相等匹配**：`status=active`
+- **多值查询**：`status=active,pending`
+- **联合查询**：使用符号 `&` 间隔
 
 **示例**：
 
 ```
-GET /api/v1/users?status==active
-GET /api/v1/users?status==active&age==25
-GET /api/v1/users?status==active&age==25&city==beijing
-GET /api/v1/users?status==active,pending&name==*zhang*
+GET /api/v1/users?status=active
+GET /api/v1/users?status=active&age=25
+GET /api/v1/users?status=active&age=25&city=beijing
+GET /api/v1/users?status=active,pending
 ```
 
 **使用限制**：
 
 - 不支持范围查询（大于、小于等）
+- 不支持排除匹配（!=）
+- 不支持模糊匹配（\*）
 - 不支持 OR 逻辑组合
 - 不支持复杂的括号分组
 - 不支持嵌套字段查询
@@ -105,9 +101,10 @@ GET /api/v1/users?filter=profile.age=ge=18;address.city==beijing
 | `=le=`  | 小于等于 | `age=le=65`                   | 范围过滤 |
 | `=in=`  | 包含     | `status=in=(active,pending)`  | 多值过滤 |
 | `=out=` | 不包含   | `status=out=(deleted,banned)` | 多值排除 |
-| `==*`   | 模糊匹配 | `name==*zhang*`               | 模糊搜索 |
 
 **注意** 操作符 `=`,`!`,`*` 需要编码，[detail](https://developer.mozilla.org/zh-CN/docs/Glossary/Percent-encoding)
+
+[RSQL/FIQL 语法规范](https://github.com/imsys/IM-Specification/blob/master/IM_Search_Specification.md#rsqlfiql-语法规范)
 
 ### 2.5 逻辑组合
 
@@ -133,21 +130,9 @@ _非必要不使用_
 GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
 ```
 
-### 2.6 性能优化
+### 2.6 模糊搜索
 
-**查询优化：**
-
-- **索引字段**：优先使用已建立索引的字段
-- **查询限制**：控制查询条件的复杂度
-- **结果限制**：使用分页控制返回数量
-- **字段选择**：只返回需要的字段
-
-**使用限制：**
-
-- **查询长度**：单个查询字符串不超过 1024 字符
-- **条件数量**：建议不超过 10 个条件
-- **嵌套深度**：建议不超过 3 层
-- **特殊字符**：需要进行 URL 编码
+支持 `name==*zhang`,`name==*zhang*`, `name==zhang*`, `name==zha*g` 等形式的模糊搜索。
 
 ## 3. IM 业务场景示例
 
@@ -157,16 +142,13 @@ GET /api/v1/users?filter=(age=gt=18;age=lt=65);(status==active,status==pending)
 
 ```
 # 单字段搜索
-GET /api/v1/users?status==active
+GET /api/v1/users?status=active
 
 # 多字段搜索
-GET /api/v1/users?status==active&city==beijing
+GET /api/v1/users?status=active&city=beijing
 
 # 多值查询
-GET /api/v1/users?status==active,pending
-
-# 模糊搜索
-GET /api/v1/users?nickname==*zhang*
+GET /api/v1/users?status=active,pending
 ```
 
 **复杂搜索示例：**
@@ -188,10 +170,10 @@ GET /api/v1/users?filter=profile.age=ge=18;profile.verified==true
 
 ```
 # 公共群组
-GET /api/v1/groups?is_public==true
+GET /api/v1/groups?is_public=true
 
 # 按名称搜索
-GET /api/v1/groups?name==*技术*
+GET /api/v1/groups?name=技术组
 ```
 
 **复杂搜索示例：**
@@ -210,10 +192,10 @@ GET /api/v1/groups?filter=name==*技术*;description==*交流*;member_count=gt=5
 
 ```
 # 按会话类型搜索
-GET /api/v1/messages?chat_type==single
+GET /api/v1/messages?chat_type=single
 
-# 按内容模糊搜索
-GET /api/v1/messages?content==*会议*
+# 按内容搜索
+GET /api/v1/messages?content=会议内容
 ```
 
 **复杂搜索示例：**
@@ -221,28 +203,68 @@ GET /api/v1/messages?content==*会议*
 ```
 # 精确过滤
 GET /api/v1/messages?filter=chat_type==single;chat_id==user_123
+# 编码后的URL
+GET /api/v1/messages?filter=chat_type%3D%3Dsingle%3Bchat_id%3D%3Duser_123
 
 # 时间范围搜索
 GET /api/v1/messages?filter=content==*会议*;created_at=ge=2024-01-01;created_at=lt=2024-12-31
+# 编码后的URL
+/api/v1/messages?filter=content%3D%3D%2A%E4%BC%9A%E8%AE%AE%2A%3Bcreated_at%3Dge%3D2024-01-01%3Bcreated_at%3Dlt%3D2024-12-31
 
 # 组合条件搜索
 GET /api/v1/messages?filter=(chat_type==single,chat_type==group);content==*重要*
+# 编码后的URL
+GET /api/v1/messages?filter=(chat_type%3D%3Dsingle%2Cchat_type%3D%3Dgroup)%3Bcontent%3D%3D%2A%E9%87%8D%E8%A6%81%2A
 ```
 
 ## 4. 最佳实践
 
-### 4.1 限制搜索数量
+推荐 优先实现 简单搜索，根据业务需求等因素，再逐步实现复杂搜索，以提高用户体验和服务器性能。
 
-建议在请求体里面添加 limit 或者 count 等字段，限制搜索数量， 降低服务器压力。
+### 4.1 限制搜索结果数量
+
+综合导出的优缺点，建议在请求中添加 limit 或者 count 等类似字段，限制搜索数量。
+
+优点如下:
+
+1. **系统稳定性**
+
+   - 防止单个请求消耗过多资源
+   - 避免因大量数据处理导致系统响应变慢
+   - 降低系统崩溃风险
+
+2. **错误处理友好**
+
+   - 失败后只需重试失败的部分
+   - 重试代价小，用户体验好
+   - 支持断点续传
+
+3. **进度可控**
+   - 用户可以看到处理进度
+   - 可以及时反馈结果
+   - 支持分批次处理
+
+缺点如下:
+
+1. **实现复杂度增加**
+
+   - 需要实现分页或游标机制
+   - 需要处理数据一致性问题（分页过程中数据变化）
+
+2. **使用限制**
+   - 无法一次性获取全量数据
+   - 需要多次请求才能获取完整结果
+
+根据不同业务场景自行决定，如果需要分页搜索，那么参考[分页章节](./im_pagination_specification.md)
 
 ### 4.2 搜索结果标记
 
-如果是分页或者游标搜索，那么可能需要多次请求和响应，建议添加 isFinished 等字段，表示搜索是否完成。
+如果是分页或者游标搜索，那么可能需要多次请求和响应，建议响应体添加 `isFinished` 等类似字段，表示搜索是否完成。
 
-### 4.3 模糊搜索
+### 4.3 模糊搜索 (暂不实现)
 
-- 使用标记表示这是模糊搜索 // todo: 如果是多个字段，指定那个字段是模糊搜索呢？
-- 模糊搜索仅支持单字段，不能同时支持多个字段。例如：支持 `name` 和 `age` 两个字段模糊搜索
+- 使用额外标记表示这是模糊搜索
+- 使用搜索关键字添加 `*`符号表示模糊搜索
 
 # 关键字命名问题
 
@@ -257,4 +279,14 @@ tentcent 采用哪种搜索规范？ [detail](https://cloud.tencent.com/document
 
 rongcloud 采用哪种搜索规范？[detail](https://docs.rongcloud.cn/not_existed)
 
-rsql 实际项目？[detail](https://github.com/search?q=RSQL&type=repositories) // todo: java 757 star
+rsql 实际项目？[detail](https://github.com/search?q=RSQL&type=repositories) // java 757 star
+
+RSQL 规范？ [detail](https://www.here.com/docs/bundle/data-client-library-developer-guide-java-scala/page/client/rsql.html)
+
+# RSQL 语法解析器示例
+
+## java
+
+## javascript
+
+## python

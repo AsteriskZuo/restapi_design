@@ -183,6 +183,12 @@ X-Request-ID: req125
 
 用户 ID、群组 ID、聊天室 ID、消息 ID、文件 ID、群成员 ID 等，建议使用 Id 作为名称的后缀。
 
+- **生成方式**：建议在客户端或服务端使用分布式算法生成全局唯一 ID，避免依赖数据库自增主键，确保水平扩展能力。
+  - **UUIDv4**：基于随机数，128 bit，碰撞概率极低。
+  - **Snowflake**：基于时间戳的 64 bit 整数，按时间趋势递增，方便排序。
+  - **ULID**：可读性更高的 Base-32 编码，按时间排序且 URL-safe。
+- **无语义性**：Id 不应包含业务或隐私信息，仅承担唯一性职能，防止数据泄漏。
+
 推荐 ✅
 例如：userId，groupId、roomId、messageId、fileId、memberId。
 
@@ -193,15 +199,20 @@ X-Request-ID: req125
 
 用户名、群组名、聊天室名、消息名、文件名、群成员名等，建议使用 Name 作为名称的后缀。
 
+- **命名原则**：Name 字段面向人类展示，应当可读、具备业务含义，并符合以下要求：
+  - **多语言支持**：使用 UTF-8 编码，允许 Emoji 与各类语言字符。
+  - **长度限制**：建议 1–64 个字符，避免前后空格及控制字符。
+  - **安全合规**：禁止包含敏感词、XSS 或 SQL 注入相关字符，必要时进行内容审核。
+
 推荐 ✅
 例如：userName，groupName。
 
 不推荐 ❌
 例如：user，group。
 
-### 7.3 备注（昵称）
+### 7.3 备注
 
-好友昵称、群组备注、聊天室备注、群成员昵称等，建议使用 Remark 作为名称的后缀。 （当前有 nickName 等）
+好友备注、群组备注、聊天室备注、群成员备注等，建议使用 Remark 作为名称的后缀。 （当前有 nickName 等）
 
 推荐 ✅
 例如：userRemark，groupRemark, memberRemark。
@@ -210,12 +221,14 @@ X-Request-ID: req125
 
 统一采用 毫秒级为单位的时间戳（`1704110400000`），建议使用 timestamp 作为名称的后缀。
 
+采用 UTC 标准。
+
 推荐 ✅
-例如：timestamp， serverTimestamp, LocalTimestamp。
+例如：timestamp， serverTimestamp, localTimestamp。
 
 ### 7.5 状态
 
-用户状态、消息状态、文件状态等，建议使用 Status 作为名称的后缀。
+用户状态、消息状态、文件状态等，建议使用 status 作为名称的后缀。（不要使用 state）
 
 ### 7.6 其它关键字
 
@@ -226,7 +239,7 @@ X-Request-ID: req125
 
 消息的动作关键字，例如：send、receive、delete、recall、forward、update、insert、get、fetch 等。
 消息的类型枚举值，例如：text、image、file、location、voice、video、custom 等。
-消息的角色关键字，例如：senderId、receiverId、conversionId 等。
+消息的角色关键字，例如：senderId、receiverId、conversionId 等。(不要使用 from，to 等其他关键字)
 
 会话的特有关键字，例如：mute、unmute、pin、unpin、read、unread 等。
 

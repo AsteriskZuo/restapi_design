@@ -169,7 +169,7 @@ Content-Type: application/json
 }
 
 # 方式2
-GET /api/v1/{resource}/batch/get?ids=id1,id2,id3
+GET /api/v1/{resource}/batch?ids=id1,id2,id3
 ```
 
 **特殊说明：**

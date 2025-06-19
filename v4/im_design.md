@@ -335,3 +335,7 @@ POST /api/v1/users/batch/get
 ```
 
 详细设计请参考 [批量操作规范文档](./im/im_batch_specification.md)
+
+# 常见问题
+
+请参考 [常见问题文档](./im/im_discussion.md)
