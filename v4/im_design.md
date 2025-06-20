@@ -33,19 +33,50 @@ authorization: Bearer token123
 GET /api/v1/getNextPage  # 依赖服务器端状态
 ```
 
-## 3. 安全规范
+## 3.内部和公开调用接口设计
+
+内部接口和公开接口的需求真实存在，但是尽量减少这种设计的差异化，保持风格一致，降低开发和维护成本。 // todo: 建议只保留一种。
+
+- 路径区分
+  ```
+  # 内部接口
+  /api/internal/v1/users
+  # 公开接口
+  /api/v1/users
+  ```
+- 请求参数区分：通过请求参数区分
+  ```
+  # 内部接口
+  /GET /api/v1/users?is_internal_api=true
+  # 公开接口 缺省参数
+  /GET /api/v1/users?
+  ```
+- 请求体区分：通过请求体的参数进行区分
+  ```http
+  /POST /api/v1/users
+  {
+    "isInternalApi": true,
+  }
+  ```
+- 请求权限区分：路径、请求参数、请求提都一样，请求权限不同
+  ```
+  authorization: Bearer internalToken
+  authorization: Bearer publicToken
+  ```
+
+## 4. 安全规范
 
 涵盖认证授权、数据安全、访问控制、传输安全和审计监控等核心安全方面。
 
-详细设计请参考 [安全规范文档](./im/im_security_overview.md)
+详细设计请参考 [安全规范文档](./im/im_security.md)
 
-## 4. 速率限制规则
+## 5. 速率限制规则
 
 实施基于身份、IP 和资源的多层级限流等策略，保障系统稳定性和可靠性。
 
 详细设计请参考 [速率限制文档](./im/im_rate_limiting.md)
 
-## 5. HTTP 方法选择
+## 6. HTTP 方法选择
 
 **CRUD 操作映射**
 
@@ -76,7 +107,7 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 - **不缓存**：响应不应被缓存
 - **条件缓存**：在特定条件下可以缓存
 
-## 6. URL 规范
+## 7. URL 规范
 
 URL 设计遵循 RESTful 原则，确保资源定位的准确性和可读性。
 
@@ -98,7 +129,7 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 
 **详细规范**：完整的 URL 设计规范请参考 [URL 规范文档](./im/im_url_specification.md)
 
-## 7. 认证方式选择
+## 8. 认证方式选择
 
 推荐使用 JWT Bearer Token，符合 RFC 6750 规范，支持无状态认证和分布式部署。
 
@@ -106,7 +137,7 @@ https://api.dev-a1.easemob.com/v1/myorg/myapp/users    // 沙箱环境
 authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-## 8. HTTP 头部要求
+## 9. HTTP 头部要求
 
 规范 HTTP 头部使用，确保客户端和服务端正确处理请求内容格式、编码和认证信息。
 
@@ -141,13 +172,13 @@ authorization: Bearer token123
 content-type: application/json; charset=utf-8
 ```
 
-## 9. 参数规范
+## 10. 参数规范
 
 统一参数传递方式，包括路径参数、查询参数、请求体参数等，支持 UTF-8 编码。
 
 详细设计请参考 [参数规范文档](./im/im_parameter_specification.md)
 
-## 10. 命名规范
+## 11. 命名规范
 
 统一命名风格，包括 URL、参数、字段等命名规则。
 
@@ -178,7 +209,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 详细设计请参考 [命名规范文档](./im/im_naming_conventions.md)
 
-## 11. 响应体格式设计
+## 12. 响应体格式设计
 
 采用标准响应结构，确保数据的一致性和可扩展性，支持分页等高级特性。
 
@@ -216,7 +247,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的响应格式设请参考 [响应格式设计文档](./im/im_response_format.md)
 
-## 12. 错误码规范
+## 13. 错误码规范
 
 采用 7 位错误码结构，确保错误信息的准确性和可追踪性。
 
@@ -235,7 +266,7 @@ GET /api/v1/users?status=active&sort=created_at:desc
 
 **详细规范**：完整的错误码请参考 [错误码设计文档](./im/im_error_code.md)
 
-## 13. 查询：排序设计
+## 14. 查询：排序设计
 
 支持单字段和多字段排序，使用 `sort` 参数指定排序字段和方向。
 
@@ -251,7 +282,7 @@ GET /api/v1/users?sort=status:desc,created_at:desc
 
 详细设计请参考 [排序规范文档](./im/im_sort_specification.md)
 
-## 14. 查询：分页设计
+## 15. 查询：分页设计
 
 支持偏移分页和游标分页两种方式，适用于不同场景。
 
@@ -267,7 +298,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 
 详细设计请参考 [分页规范文档](./im/im_pagination_specification.md)
 
-## 15. 查询：搜索设计
+## 16. 查询：搜索设计
 
 支持基础搜索、高级搜索、全文搜索和语义搜索等多种搜索方式。
 
@@ -296,7 +327,7 @@ GET /api/v1/messages?chat_id=123&sort=created_at:desc
 
 详见 [排序规范文档](./im/im_sort_specification.md)
 
-## 16. 批量操作
+## 17. 批量操作
 
 支持原子性和非原子性批量操作，适用于创建、更新、删除和获取等场景。
 
@@ -336,6 +367,6 @@ POST /api/v1/users/batch/get
 
 详细设计请参考 [批量操作规范文档](./im/im_batch_specification.md)
 
-# 常见问题
+# 术语表
 
-请参考 [常见问题文档](./im/im_discussion.md)
+详见 [术语表文档](./im/im_terminology.md)
