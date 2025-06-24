@@ -56,7 +56,7 @@
 **规则：**
 
 - 小写字母 + 下划线：`created_at`、`message_type`
-- 分页参数：`page`、`cursor`
+- 分页参数：`page`、`size`、`cursor`、`limit`
 - 排序参数：`sort`
 
 **示例：**

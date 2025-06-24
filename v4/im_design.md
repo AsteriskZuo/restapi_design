@@ -35,34 +35,16 @@ GET /api/v1/getNextPage  # 依赖服务器端状态
 
 ## 3.内部和公开调用接口设计
 
-内部接口和公开接口的需求真实存在，但是尽量减少这种设计的差异化，保持风格一致，降低开发和维护成本。 // todo: 建议只保留一种。
+内部接口（系统组件间通信，或者部分对外用户请求）和公开接口（面向外部客户端）。
 
-- 路径区分
-  ```
-  # 内部接口
-  /api/internal/v1/users
-  # 公开接口
-  /api/v1/users
-  ```
-- 请求参数区分：通过请求参数区分
-  ```
-  # 内部接口
-  /GET /api/v1/users?is_internal_api=true
-  # 公开接口 缺省参数
-  /GET /api/v1/users?
-  ```
-- 请求体区分：通过请求体的参数进行区分
-  ```http
-  /POST /api/v1/users
-  {
-    "isInternalApi": true,
-  }
-  ```
-- 请求权限区分：路径、请求参数、请求提都一样，请求权限不同
-  ```
-  authorization: Bearer internalToken
-  authorization: Bearer publicToken
-  ```
+通过子域名进行区分：例如：
+
+```
+# 内部接口
+/api/internal/v1/users
+# 公开接口
+/api/v1/users
+```
 
 ## 4. 安全规范
 
