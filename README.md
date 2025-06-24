@@ -79,4 +79,20 @@
             ├── im_transport_security.md // 传输安全
             ├── im_authentication.md // 认证
             └── im_audit_security.md // 审计安全
+└── v5 // restapi 第五个版本  最新版本
+    ├── im_design.md // IM 设计
+    ├── im_design.single.md // IM 设计单文件版本
+    └── im/ // IM 规范文档
+        ├── im_naming_conventions.md // 命名规范
+        ├── im_error_code.md // 错误码
+        ├── im_response_format.md // 响应格式
+        ├── im_rate_limiting.md // 限流规范
+        ├── im_batch_specification.md // 批量操作规范
+        ├── im_sort_specification.md // 排序规范
+        ├── im_url_specification.md // URL 规范
+        ├── im_parameter_specification.md // 参数规范
+        ├── im_search_specification.md // 搜索规范
+        ├── im_pagination_specification.md // 分页规范
+        ├── im_security.md // 安全规范
+        └── im_terminology.md // 术语表
 ```
