@@ -575,17 +575,113 @@ Cache-Control: no-cache                # 缓存控制
 - **典型：字符串排序**：规定 字符串从小到大（asc）或从大到小（desc）。例如：联系人列表名称首字母排序。
 - **默认排序**： 如果字段没有指定排序规则，则默认排序规则需要说明。
 
-**多值排序**： 支持多字段排序。
-
-- **示例：多字段排序**：规定 多个字段通过 `,` 分割。
+**多值排序**： 支持多字段排序，通过 `,` 分割字段。
 
 ## 9.2 分页
 
-// todo:
+支持偏移分页和游标分页两种方式，适用于不同场景。
+
+1. 偏移分页
+
+**参数说明：**
+
+| 参数   | 说明     | 示例                           | 适用场景   |
+| ------ | -------- | ------------------------------ | ---------- |
+| `page` | 页码     | 从 1 开始。例如：`page=1`      | 常规分页   |
+| `size` | 每页数量 | 大于 0 的整数。例如：`size=20` | 控制返回量 |
+
+**使用示例：**
+
+```
+GET /api/v1/users?page=1&size=20
+```
+
+**响应格式：**
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "pagination": {
+      "total": 100,
+      "page": 1,
+      "size": 20,
+      "pages": 5
+    }
+  }
+}
+```
+
+2. 游标分页
+
+**参数说明：**
+
+| 参数     | 说明     | 示例                      | 适用场景   |
+| -------- | -------- | ------------------------- | ---------- |
+| `cursor` | 游标     | `cursor=eyJpZCI6IjEyMyJ9` | 大数据集   |
+| `limit`  | 限制数量 | `limit=20`                | 控制返回量 |
+
+**使用示例：**
+
+```
+GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
+```
+
+**响应格式：**
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "pagination": {
+      "next_cursor": "eyJpZCI6IjEyNCJ9",
+      "has_more": true
+    }
+  }
+}
+```
 
 ## 9.3 搜索
 
-// todo:
+支持单值、多值、组合排序等多种搜索方式。
+
+**支持能力**：
+
+- 支持精确匹配
+- 支持多值匹配
+- 支持多字段联合查询
+
+**操作符规则**：
+
+- **相等匹配**：`status=active`
+- **多值查询**：`status=active,pending`
+- **联合查询**：使用符号 `&` 间隔
+
+**使用限制**：
+
+- 不支持范围查询（大于、小于等）
+- 不支持排除匹配（!=）
+- 不支持模糊匹配（\*）
+- 不支持 OR 逻辑组合
+- 不支持复杂的括号分组
+- 不支持嵌套字段查询
+
+**搜索示例：**：
+
+```http
+# 单值搜索（简单搜索模式）
+GET /api/v1/users?status=active
+GET /api/v1/messages?chat_type=single
+
+# 多值搜索（简单搜索模式）
+GET /api/v1/users?status=active,pending
+GET /api/v1/messages?chat_type=single,group
+
+# 搜索+排序
+GET /api/v1/users?status=active&sort=created_at:desc
+GET /api/v1/groups?filter=is_public==true;member_count=ge=10&sort=activity:desc,created_at:desc
+GET /api/v1/messages?chat_id=123&sort=created_at:desc
+```
 
 # 10. 批处理
 
@@ -607,7 +703,7 @@ _由服务端决策_
 
 ## 10.1 批量创建示例
 
-**请求格式：**
+**批量创建请求格式示例：**
 
 ```http
 POST /api/v1/{resource}/batch
@@ -621,7 +717,7 @@ Content-Type: application/json
 }
 ```
 
-**响应格式：**
+**批量创建响应格式示例：**
 
 ```http
 Content-Type: application/json
@@ -649,7 +745,7 @@ Content-Type: application/json
 
 ## 10.2 批量更新示例
 
-**请求格式：**
+**批量更新请求格式：**
 
 ```http
 PUT /api/v1/{resource}/batch
@@ -663,7 +759,7 @@ Content-Type: application/json
 }
 ```
 
-**响应格式：**
+**批量更新响应格式：**
 
 ```http
 Content-Type: application/json
@@ -691,13 +787,13 @@ Content-Type: application/json
 
 ## 10.3 批量删除示例
 
-**请求格式：**
+**批量删除请求格式：**
 
 ```http
 DELETE /api/v1/{resource}/batch?ids=id1,id2,id3
 ```
 
-**响应格式：**
+**批量删除响应格式：**
 
 ```http
 Content-Type: application/json
@@ -726,7 +822,7 @@ Content-Type: application/json
 
 ## 10.4 批量获取示例
 
-**请求格式：**
+**批量获取请求格式示例：**
 
 ```http
 POST /api/v1/{resource}/batch/get
@@ -737,7 +833,7 @@ Content-Type: application/json
 }
 ```
 
-**响应格式：**
+**批量获取响应格式示例：**
 
 ```http
 Content-Type: application/json
