@@ -76,3 +76,7 @@
 
 [md-to-word](https://markdowntoword.net/)
 [md-to-word2](https://cloudconvert.com/md-to-docx)
+
+## http 语法
+
+[http-syntax](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control)
