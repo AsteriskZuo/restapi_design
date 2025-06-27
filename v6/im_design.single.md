@@ -242,7 +242,7 @@ Cache-Control: no-cache                # 缓存控制
 
 **基本原则**
 
-- **适用 HTTP 方法**：主要用于 POST、PUT 等方法，DELETE 可选，GET/HEAD 不支持
+- **适用 HTTP 方法**：主要用于 POST、PUT 等方法，DELETE 可选，GET 不支持
 - **内容类型声明**：必须设置`Content-Type`头部
 
 **使用场景**
@@ -531,6 +531,8 @@ Content-Type: {Content-Type}
   "meta": {...}
 }
 ```
+
+_如果上传失败，请参考章节 4.2_
 
 # 7. 查询
 
