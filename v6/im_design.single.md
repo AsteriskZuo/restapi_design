@@ -8,7 +8,7 @@ URL 设计遵循 RESTFUL API 原则，确保资源定位的准确性和可读性
 
 ## 1.1 URL 结构规则
 
-**URL 结构 = 协议 + 主机 + 版本 + 组织名 + 应用名 + 资源路径 + 查询参数等**
+**URL 结构 = 协议 + 主机 + 版本 + 组织名 + 应用名 + 资源路径 + 参数等**
 
 **分层结构：**
 
@@ -26,22 +26,16 @@ URL 设计遵循 RESTFUL API 原则，确保资源定位的准确性和可读性
 - **资源路径**：资源层级
   - 名称使用小写字母、数字和下划线组成
   - 名称使用名词，不要使用动词，通过 HTTP 方法来表示操作意图
-- **查询参数**：过滤条件
+- **参数**：过滤条件
   - 名称使用小写字母、数字和下划线组成
-  - 通过 `?<query>` 来传递查询条件
-  - 通过 `&` 来分隔多个查询条件
+  - 通过 `?<query>` 来传递条件
+  - 通过 `&` 来分隔多个条件
 
 **URL 结构示例：**
 
 ```http
 https://{host}/{version}/{org_id}/{app_name}/auth
-https://{host}/{version}/{org_id}/{app_name}/users
-https://{host}/{version}/{org_id}/{app_name}/groups
 https://{host}/{version}/{org_id}/{app_name}/groups/threads
-https://{host}/{version}/{org_id}/{app_name}/rooms
-https://{host}/{version}/{org_id}/{app_name}/messages
-https://{host}/{version}/{org_id}/{app_name}/messages/reactions
-https://{host}/{version}/{org_id}/{app_name}/push
 ```
 
 **URL 版本示例：**
@@ -72,7 +66,7 @@ PUT /api/v1/updateUser/123
 DELETE /api/v1/deleteUser/123
 ```
 
-**URL 查询参数示例：**
+**URL 参数示例：**
 
 ```http
 # ✅ 正确
@@ -85,7 +79,7 @@ GET /api/v1/users!name=John&age=30 // 没有使用 `?`
 
 ## 1.2 公开和私有接口
 
-公开接口（面向外部客户端）和 私有接口（系统组件间通信，或者部分对外用户请求）通过资源进行区分。
+公开接口 和 私有接口 通过资源进行区分。
 
 **接口示例：**
 
@@ -102,10 +96,10 @@ GET /api/v1/users!name=John&age=30 // 没有使用 `?`
 
 - **增加(Create)**: POST
 - **查询(Read)**: GET
-- **修改(Update)**: PUT（完整更新）~~或 PATCH（部分更新）~~
+- **修改(Update)**: PUT（完整更新）
 - **删除(Delete)**: DELETE
 
-**HTTP 方法特性**
+**HTTP 方法说明**
 
 | 方法   | 幂等性     | 缓存性     | 主要用途 | 说明                   |
 | ------ | ---------- | ---------- | -------- | ---------------------- |
@@ -116,7 +110,7 @@ GET /api/v1/users!name=John&age=30 // 没有使用 `?`
 
 **特殊情况**
 
-- 在传递参数为复杂对象时，使用 POST 代替 GET ，请求体 代替 查询参数。
+- url 最后以 `/get` 结束表示实际为 `GET` 使用。
 
 **幂等性说明**:
 
@@ -167,14 +161,14 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
   - `Content-Type`: 如果使用请求体并且内容是文件, 则设置值为 `multipart/form-data; boundary={unique_boundary_string}`
 - **内容编码**:
   - `Content-Encoding`: 当请求体较大时，可使用 `gzip` 等编码方式压缩传输内容，适用于 JSON、XML 等文本格式（参考 RFC 9110 Section 8.4.1）
-- **语言响应**:
-  - `Content-Language`: 响应内容语言, 值为 `zh-CN` 或 `en-US` 等
+- **内容语言**:
+  - `Content-Language`: 内容语言, 值为 `zh-CN` 或 `en-US` 等
 
 ## 3.3 请求头
 
 **必要**
 
-- **身份验证**: `Authorization` 用于身份验证，推荐采用 JWT Bearer Token 验证
+- **身份验证**: `Authorization` 用于身份验证，推荐采用 Token 验证
 
 **可选**
 
@@ -183,7 +177,7 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
 - **文件请求**:
   - `Accept`: 期望响应格式, 例如: `multipart/form-data; boundary={unique_boundary_string}`
 - **语言协商**:
-  - `Accept-Language`: 期望响应语言, 值为 `zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7`
+  - `Accept-Language`: 期望响应语言, 例如: `zh-CN,zh,en-US,en`
 - **压缩请求**:
   - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
 - **缓存控制请求**:
@@ -199,7 +193,7 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
   - `Accept`: 期望响应格式, 值为 `application/json; charset=utf-8`
 - **文件响应**:
 
-  - `Accept`: 期望响应格式, 例如: `multipart/form-data; boundary={unique_boundary_string}`
+  - `Accept`: 期望响应格式, 值为: `multipart/form-data; boundary={unique_boundary_string}`
 
 - **压缩响应**:
   - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
@@ -219,14 +213,7 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
 **请求示例：**:
 
 ```http
-# ✅ 推荐（小数据量）
-Content-Type: application/json; charset=utf-8
-Accept: application/json; charset=utf-8
-Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Cache-Control: no-cache                # 缓存控制
-
-# ✅ 推荐（大数据量，使用压缩）
+# ✅ 推荐
 Content-Type: application/json; charset=utf-8
 Accept: application/json; charset=utf-8
 Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
@@ -255,12 +242,12 @@ Cache-Control: no-cache                # 缓存控制
 
 **基本原则**
 
-- **适用 HTTP 方法**：主要用于 POST、PUT 等方法，DELETE 可选，GET/HEAD 不推荐
+- **适用 HTTP 方法**：主要用于 POST、PUT 等方法，DELETE 可选，GET/HEAD 不支持
 - **内容类型声明**：必须设置`Content-Type`头部
 
 **使用场景**
 
-- **复杂查询条件**：当查询参数结构复杂或长度过长时
+- **复杂查询**：当参数结构复杂或 url 长度过长时
 - **批量操作**：需要一次性处理多个资源
 - **大数据传输**：请求体过大时，推荐使用文件上传方式
 
@@ -339,13 +326,6 @@ Cache-Control: no-cache                # 缓存控制
   }
 }
 ```
-
-## 4.3 文件格式响应体
-
-**文件响应结构 = 文件数据 + 元数据信息**
-
-- **文件数据**：二进制文件内容（下载）或文件属性信息（上传后）
-- **元数据信息**：通过 HTTP 头部或 JSON 对象提供的附加信息
 
 # 5. 错误码
 
@@ -489,86 +469,11 @@ Cache-Control: no-cache                # 缓存控制
 
 # 6. 文件
 
-## 6.1 小文件
-
-小文件指文件大小小于 10MB 的文件，采用 JSON 方式上传下载。
-
-_10MB 是参考值，请根据实际情况决定_
-
 **基本原则**
 
-- **传输方式**：JSON 格式传输文件内容
-- **编码方式**：Base64 编码文件内容
-
-**使用场景**
-
-- **头像上传**：用户头像、群组头像
-- **小图片**：表情包、缩略图
-- **小文档**：配置文件、说明文档
-
-**请求头**
-
-- `Authorization`: `Bearer {token}`
-- `Content-Type`: `application/json; charset=utf-8`
-- `Content-Encoding`: `gzip`
-- `Accept`: `application/json; charset=utf-8`
-
-**响应头**
-
-- `Content-Type`: `application/json; charset=utf-8`
-
-**请求体**
-
-- filename: 文件名
-- content: 经过 base64 编码的文件内容
-- mimeType: 文件类型，服务器保存需要
-- description: 文件描述（可选）
-
-```json
-{
-  "data": {
-    "filename": "avatar.jpg",
-    "content": "base64,/9j/4AAQSkZJRgABAQAAAQ...",
-    "mimeType": "image/jpeg",
-    "description": "用户头像"
-  },
-  "meta": {...}
-}
-```
-
-**响应体**
-
-- fileId: 文件 ID
-- filename: 文件名
-- size: 文件大小
-- mimeType: 文件类型
-- url: 文件 URL
-- uploadedAt: 文件上传时间（可选）
-
-```json
-{
-  "data": {
-    "fileId": "file_123456789",
-    "filename": "avatar.jpg",
-    "size": 102400,
-    "mimeType": "image/jpeg",
-    "url": "https://cdn.example.com/files/file_123456789",
-    "uploadedAt": 1704110400000
-  },
-  "meta": {...}
-}
-```
-
-## 6.2 大文件
-
-大文件指文件大小大于等于 10MB 的文件，采用分片上传方式。
-
-_10MB 是参考值，请根据实际情况决定_
-
-**基本原则**
-
-- **传输方式**：分片上传，每片大小建议 5MB (参考值，根据实际情况调整)
-- **编码方式**：multipart/form-data 格式
+- **传输方式**：分片上传
+- **编码方式**：使用原始二进制数据，避免 Base64 编码带来的 33% 数据量增加
+- **Boundary 处理**：使用足够复杂的 boundary 字符串（包含时间戳和随机字符），降低与文件内容冲突的概率
 
 **使用场景**
 
@@ -611,10 +516,9 @@ Content-Type: {Content-Type}
 **响应体**
 
 - fileId: 文件唯一标识
-- chunkIndex: 已上传分片索引。当 `chunkIndex = totalChunks - 1`（最后一片）上传后，isCompleted 为 true。
-- uploadedChunks: 已上传分片数量（可选）
+- chunkIndex: 已上传分片索引。当 `chunkIndex = totalChunks - 1`
+- uploadedChunks: 已上传分片数量
 - totalChunks: 总分片数
-- isCompleted: 是否上传完成
 
 ```json
 {
@@ -622,8 +526,7 @@ Content-Type: {Content-Type}
     "fileId": "file_123456789",
     "chunkIndex": 2,
     "uploadedChunks": 3,
-    "totalChunks": 5,
-    "isCompleted": false
+    "totalChunks": 5
   },
   "meta": {...}
 }
@@ -668,10 +571,10 @@ GET /api/v1/users?page=1&size=20
 
 - list: 数组类型
 - pagination: 页码属性
-  - isEndPage: 是否是最后一页
   - totalPages: 总页数（可选）
-  - size: 单页大小
-  - page: 当前页码
+  - noMore: 是否有下一页
+  - count: 实际数量大小
+  - page: 请求的页码
 
 ```json
 {
@@ -679,9 +582,9 @@ GET /api/v1/users?page=1&size=20
     list: [...],
     "pagination": {
       "totalPages": 20,
-      "page": 1,
-      "size": 20,
-      "isEndPage": false
+      "page": 20,
+      "count": 18,
+      "noMore": true
     }
   },
   "meta": {...}
@@ -708,10 +611,9 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 - list: 数组类型
 - pagination: 页码属性
   - totalPages: 总页数（可选）
-  - hasMore: 是否有下一页
-  - cursor: 游标
-  - limit: 单页大小
-  - nextCursor: 下一页游标
+  - noMore: 是否有下一页
+  - count: 实际数量大小
+  - cursor: 下一页游标, 如果没有下一页，返回空字符串
 
 ```json
 {
@@ -719,10 +621,9 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
     "list": [...],
     "pagination": {
       "totalPages": 20,
-      "nextCursor": "eyJpZCI6IjEyMyJ9",
-      "limit": 20,
-      "cursor": "eyJpZCI6IjEyMyJ8",
-      "hasMore": true
+      "count": 18,
+      "cursor": "",
+      "noMore": true
     }
   },
   "meta": {...}
@@ -764,7 +665,7 @@ GET /api/v1/messages?chat_id=123&sort=created_at:desc
 
 # 8. 批处理
 
-**批量操作构成 = URL 路径标识(/batch) + 业务数据(必需)**
+**批量操作构成 = URL 路径标识(/batch) + 操作关键字(可选)**
 
 **操作类型分类：**
 
