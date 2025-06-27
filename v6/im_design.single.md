@@ -1,10 +1,10 @@
-# IM REST 开发设计规范
+# IM RESTFUL API 开发设计规范
 
 本文档基于 `RFC9110`、`RFC9205` 等国际标准，结合 `Claude-4-Sonnet` 的最佳实践，深度分析 IM 业务场景特点，形成了这套较为完整的可落地的规范建议方案。
 
 # 1. HTTP URL
 
-URL 设计遵循 RESTful 原则，确保资源定位的准确性和可读性。
+URL 设计遵循 RESTFUL API 原则，确保资源定位的准确性和可读性。
 
 ## 1.1 URL 结构规则
 
@@ -14,15 +14,14 @@ URL 设计遵循 RESTful 原则，确保资源定位的准确性和可读性。
 
 - **协议**：http/https
 - **主机**：API 服务域名或者 IP 地址
-  - 正式环境：api.easemob.com
-  - 开发环境：api.dev-{env}.easemob.com
+  - 示例：api.easemob.com
+  - 开发示例：api.dev-{env}.easemob.com
 - **版本**：API 版本号（v1/v2 等）
 - **组织标识**：组织标识（租户标识）
   - 用于多租户隔离
-  - 支持跨组织数据访问控制
+  - 系统生成
 - **应用名**：应用名称（应用标识）
   - 用于多应用隔离
-  - 支持应用级别的配置管理
   - 用户创建时填写，创建后无法修改
 - **资源路径**：资源层级
   - 名称使用小写字母、数字和下划线组成
@@ -84,14 +83,14 @@ GET /api/v1/users?name=John;age=30 // 分隔符不是 `&`
 GET /api/v1/users!name=John&age=30 // 没有使用 `?`
 ```
 
-## 1.2 内外接口
+## 1.2 公开和私有接口
 
-内部接口（系统组件间通信，或者部分对外用户请求）和公开接口（面向外部客户端）通过资源进行区分。
+公开接口（面向外部客户端）和 私有接口（系统组件间通信，或者部分对外用户请求）通过资源进行区分。
 
-**内外接口示例：**
+**接口示例：**
 
 ```
-# 内部接口
+# 私有接口
 /api/internal/v1/users
 # 公开接口
 /api/v1/users
@@ -103,19 +102,21 @@ GET /api/v1/users!name=John&age=30 // 没有使用 `?`
 
 - **增加(Create)**: POST
 - **查询(Read)**: GET
-- **修改(Update)**: PUT（完整更新）或 PATCH（部分更新）
+- **修改(Update)**: PUT（完整更新）~~或 PATCH（部分更新）~~
 - **删除(Delete)**: DELETE
 
 **HTTP 方法特性**
 
-| 方法    | 幂等性     | 缓存性     | 主要用途       | 说明                         |
-| ------- | ---------- | ---------- | -------------- | ---------------------------- |
-| OPTIONS | 幂等       | 不缓存     | 获取可用的方法 | 不是所有的资源都允许所有方法 |
-| GET     | 幂等       | 可缓存     | 获取资源       | 不应有副作用                 |
-| POST    | 通常非幂等 | 通常不缓存 | 创建资源       | 可通过幂等键设计为幂等       |
-| PUT     | 幂等       | 条件缓存   | 完整更新       | 响应可在某些情况下缓存       |
-| PATCH   | 取决于实现 | 通常不缓存 | 部分更新       | 设置操作幂等，增量操作非幂等 |
-| DELETE  | 幂等       | 条件缓存   | 删除资源       | 重复删除不应报错             |
+| 方法   | 幂等性     | 缓存性     | 主要用途 | 说明                   |
+| ------ | ---------- | ---------- | -------- | ---------------------- |
+| GET    | 幂等       | 可缓存     | 获取资源 | 不应有副作用           |
+| POST   | 通常非幂等 | 通常不缓存 | 创建资源 | 可通过幂等键设计为幂等 |
+| PUT    | 幂等       | 条件缓存   | 完整更新 | 响应可在某些情况下缓存 |
+| DELETE | 幂等       | 条件缓存   | 删除资源 | 重复删除不应报错       |
+
+**特殊情况**
+
+- 在传递参数为复杂对象时，使用 POST 代替 GET ，请求体 代替 查询参数。
 
 **幂等性说明**:
 
@@ -152,6 +153,7 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
 | -------- | ---------------- | ---------------------------------------- |
 | 身份认证 | 验证请求合法性   | Authorization, X-Token                   |
 | 内容协商 | 确定响应内容格式 | Accept, Content-Type                     |
+| 语言协商 | 确定响应语言     | Accept-Language, Content-Language        |
 | 缓存控制 | 控制缓存行为     | Cache-Control, ETag, Last-Modified       |
 | 资源压缩 | 优化传输效率     | Accept-Encoding, Content-Encoding        |
 | 跨域资源 | 控制跨域访问     | Access-Control-Allow-Origin              |
@@ -161,45 +163,44 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
 ## 3.2 表示标头
 
 - **内容类型**:
-  - `Content-Type`: 如果是文本, 值为 `application/json`
-  - `Content-Type`: 如果是文件, 值为 `multipart/form-data` 或者 `application/octet-stream`
+  - `Content-Type`: 如果使用请求体并且内容是文本, 则设置值为 `application/json; charset=utf-8`
+  - `Content-Type`: 如果使用请求体并且内容是文件, 则设置值为 `multipart/form-data; boundary={unique_boundary_string}`
 - **内容编码**:
-  - `Content-Encoding`: 请求体压缩格式, 例如: `gzip`
+  - `Content-Encoding`: 当请求体较大时，可使用 `gzip` 等编码方式压缩传输内容，适用于 JSON、XML 等文本格式（参考 RFC 9110 Section 8.4.1）
+- **语言响应**:
+  - `Content-Language`: 响应内容语言, 值为 `zh-CN` 或 `en-US` 等
 
 ## 3.3 请求头
 
 **必要**
 
 - **身份验证**: `Authorization` 用于身份验证，推荐采用 JWT Bearer Token 验证
-- **请求跟踪**:
-  - `X-Request-ID`: 请求 ID, 值为 UUID
 
 **可选**
 
 - **文本请求**:
-  - `Accept`: 期望响应格式, 值为 `application/json`
+  - `Accept`: 期望响应格式, 值为 `application/json; charset=utf-8`
 - **文件请求**:
-  - `Accept`: 期望响应格式, 例如: `multipart/form-data` 或者 `application/octet-stream`
+  - `Accept`: 期望响应格式, 例如: `multipart/form-data; boundary={unique_boundary_string}`
+- **语言协商**:
+  - `Accept-Language`: 期望响应语言, 值为 `zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7`
 - **压缩请求**:
   - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
 - **缓存控制请求**:
   - `Cache-Control`: 缓存控制，值可以为 `no-cache` `no-store` 等
-- **资源压缩请求**:
-  - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
-
-## 3.4 响应头
-
-**必须**
-
 - **请求跟踪**:
   - `X-Request-ID`: 请求 ID, 值为 UUID
+
+## 3.4 响应头
 
 **可选**
 
 - **文本响应**:
-  - `Accept`: 期望响应格式, 值为 `application/json`
+  - `Accept`: 期望响应格式, 值为 `application/json; charset=utf-8`
 - **文件响应**:
-  - `Accept`: 期望响应格式, 例如: `multipart/form-data` 或者 `application/octet-stream`
+
+  - `Accept`: 期望响应格式, 例如: `multipart/form-data; boundary={unique_boundary_string}`
+
 - **压缩响应**:
   - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
 - **缓存控制响应**:
@@ -210,17 +211,28 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
   - `Access-Control-Allow-Origin`: 允许跨域访问的域名
   - `Access-Control-Allow-Methods`: 允许跨域访问的方法
   - `Access-Control-Allow-Headers`: 允许跨域访问的请求头
+- **请求跟踪**:
+  - `X-Request-ID`: 请求 ID, 值为 UUID
 
 ## 3.5 示例
 
 **请求示例：**:
 
 ```http
-# ✅ 推荐
-Content-Type: application/json
-Accept: application/json
+# ✅ 推荐（小数据量）
+Content-Type: application/json; charset=utf-8
+Accept: application/json; charset=utf-8
+Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Encoding: gzip                 # 压缩响应
+Cache-Control: no-cache                # 缓存控制
+
+# ✅ 推荐（大数据量，使用压缩）
+Content-Type: application/json; charset=utf-8
+Accept: application/json; charset=utf-8
+Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Encoding: gzip                 # 请求体压缩
+Accept-Encoding: gzip                  # 响应体压缩
 Cache-Control: no-cache                # 缓存控制
 ```
 
@@ -228,8 +240,9 @@ Cache-Control: no-cache                # 缓存控制
 
 ```http
 # ✅ 推荐
-Accept: application/json               # 期望响应格式
-Content-Type: application/json         # 响应体格式
+Accept: application/json; charset=utf-8               # 期望响应格式
+Content-Type: application/json; charset=utf-8         # 响应体格式
+Content-Language: zh-CN                               # 响应语言
 Content-Encoding: gzip                 # 压缩响应
 Cache-Control: no-cache                # 缓存控制
 ```
@@ -238,12 +251,12 @@ Cache-Control: no-cache                # 缓存控制
 
 ## 4.1 请求体
 
-请求体是在 HTTP 请求中传输数据的主要载体，主要用于 POST、PUT 和 PATCH 等方法。
+请求体是在 HTTP 请求中传输数据的主要载体，主要用于 POST、PUT 等方法。
 
 **基本原则**
 
-- **适用 HTTP 方法**：主要用于 POST、PUT 和 PATCH 方法，DELETE 可选，GET/HEAD 不推荐
-- **内容类型声明**：必须设置`Content-Type`头部（例如：`Content-Type: application/json`）
+- **适用 HTTP 方法**：主要用于 POST、PUT 等方法，DELETE 可选，GET/HEAD 不推荐
+- **内容类型声明**：必须设置`Content-Type`头部
 
 **使用场景**
 
@@ -265,13 +278,7 @@ Cache-Control: no-cache                # 缓存控制
 
 - json 请求体对象采用首字母小写的驼峰命名风格，例如：`user`、`userList`、`userListPage` 等。
 
-**requestId 组成结构 = 时间戳(13 位) + 设备标识(6 位) + 随机数(8 位)**
-
-- **时间戳(13 位)**：毫秒级时间戳，保证时序性和唯一性
-- **设备标识(6 位)**：设备 ID 的 hash 值后 6 位，支持分布式追踪
-- **随机数(8 位)**：随机字符串，避免高并发碰撞
-
-**响应示例：**:
+**成功响应示例：**:
 
 ```json
 {
@@ -285,6 +292,8 @@ Cache-Control: no-cache                # 缓存控制
   }
 }
 ```
+
+**失败响应示例：**:
 
 ```json
 {
@@ -446,11 +455,224 @@ Cache-Control: no-cache                # 缓存控制
 
 - **1000+**: 各业务模块可根据特殊需求定义的专用错误码
 
-# 6. 安全策略
+# 6. 文件
+
+## 6.1 小文件
+
+// todo:
+
+**请求头**
+**响应头**
+**请求体**
+**响应体**
+
+## 6.2 大文件
+
+// todo:
+
+**请求头**
+**响应头**
+**请求体**
+**响应体**
+
+# 7. 查询
+
+查询功能通过定义排序、分页和搜索等规范，来高效地控制和筛选返回的资源结果集。
+
+## 7.1 排序
+
+支持单字段和多字段排序，使用 `sort` 参数标记使用排序规则，例如：`sort=created_at:desc`。
+
+**排序方向**：`asc`（升序）或 `desc`（降序）
+
+- **典型：时间戳排序**：规定 整数值从小到大（asc），从大到小（desc）。
+- **典型：字符串排序**：规定 字符串从小到大（asc）或从大到小（desc）。
+- **默认排序**： 如果字段没有指定排序规则，则默认排序规则需要在文档中说明。
+
+**多值排序**： 支持多字段排序，通过 `,` 分割字段。
+
+## 7.2 分页
+
+支持偏移分页和游标分页两种方式，适用于不同场景。
+
+1. 偏移分页
+
+**参数说明：**
+
+| 参数   | 说明     | 要求                           | 适用场景   |
+| ------ | -------- | ------------------------------ | ---------- |
+| `page` | 页码     | 从 1 开始。例如：`page=1`      | 常规分页   |
+| `size` | 每页数量 | 大于 0 的整数。例如：`size=20` | 控制返回量 |
+
+**使用示例：**
+
+```
+GET /api/v1/users?page=1&size=20
+```
+
+**响应格式：**
+
+- list: 数组类型
+- pagination: 页码属性
+  - isEndPage: 是否是最后一页
+  - totalPages: 总页数（可选）
+  - size: 单页大小
+  - page: 当前页码
+
+```json
+{
+  "data": {
+    list: [...],
+    "pagination": {
+      "totalPages": 20,
+      "page": 1,
+      "size": 20,
+      "isEndPage": false
+    }
+  },
+  "meta": {...}
+}
+```
+
+1. 游标分页
+
+**参数说明：**
+
+| 参数     | 说明     | 要求                                      | 适用场景   |
+| -------- | -------- | ----------------------------------------- | ---------- |
+| `cursor` | 游标     | 唯一标识，例如：`cursor=eyJpZCI6IjEyMyJ8` | 大数据集   |
+| `limit`  | 限制数量 | 大于 0 的整数。例如：`limit=20`           | 控制返回量 |
+
+**使用示例：**
+
+```
+GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
+```
+
+**响应格式：**
+
+- list: 数组类型
+- pagination: 页码属性
+  - totalPages: 总页数（可选）
+  - hasMore: 是否有下一页
+  - cursor: 游标
+  - limit: 单页大小
+  - nextCursor: 下一页游标
+
+```json
+{
+  "data": {
+    "list": [...],
+    "pagination": {
+      "totalPages": 20,
+      "nextCursor": "eyJpZCI6IjEyMyJ9",
+      "limit": 20,
+      "cursor": "eyJpZCI6IjEyMyJ8",
+      "hasMore": true
+    }
+  },
+  "meta": {...}
+}
+```
+
+## 7.3 搜索
+
+支持单值、多值、组合排序等多种搜索方式。
+
+**支持能力**：
+
+- 支持精确匹配
+- 支持多值匹配
+- 支持多字段联合查询
+
+**操作符规则**：
+
+- **相等匹配**：`status=active`
+- **多值查询**：`status=active,pending`
+- **联合查询**：使用符号 `&` 间隔
+
+**搜索示例：**：
+
+```http
+# 单值搜索
+GET /api/v1/users?status=active
+GET /api/v1/messages?chat_type=single
+
+# 多值搜索
+GET /api/v1/users?status=active,pending
+GET /api/v1/messages?chat_type=single,group
+
+# 搜索+排序
+GET /api/v1/users?status=active&sort=created_at:desc
+GET /api/v1/groups?filter=is_public==true;member_count=ge=10&sort=activity:desc,created_at:desc
+GET /api/v1/messages?chat_id=123&sort=created_at:desc
+```
+
+# 8. 批处理
+
+**批量操作构成 = URL 路径标识(/batch) + 业务数据(必需)**
+
+**操作类型分类：**
+
+- **批量创建**：POST /api/v1/{resource}/batch
+- **批量更新**：PUT /api/v1/{resource}/batch
+- **批量删除**：POST /api/v1/{resource}/batch/delete
+- **批量获取**：POST /api/v1/{resource}/batch/get
+
+**事务类型：**
+
+_由服务端决策_
+
+- **原子性事务**：所有操作要么全部成功，要么全部失败
+- **非原子性事务**：部分操作成功，部分操作失败
+
+**请求格式：**
+
+- data: 数组类型，数组元素用户自定义。
+
+```json
+{
+  "data": [
+    { "id": "id1" },
+    { "id": "id2" }
+  ],
+  "meta": {...}
+}
+```
+
+**响应格式：**
+
+- success: 成功结果
+- failed: 失败结果
+- summary: 总计结果(可选)
+  - totalCount: 总数
+  - successCount: 成功数
+  - failedCount: 失败数
+
+```json
+{
+  "data": {
+    "success": [
+      { "id": "id1", "status": "created", "createdAt": 1704110400000 }
+    ],
+    "failed": [
+      { "id": "id2", "error": { "code": 4000001, "message": "名称不合法" } }
+    ],
+    "summary": {
+      "totalCount": 2,
+      "successCount": 1,
+      "failedCount": 1
+    }
+  },
+  "meta": {...}
+}
+```
+
+# 9. 安全策略
 
 涵盖认证授权、数据安全、访问控制、传输安全和审计监控等核心安全方面。
 
-## 6.1 传输安全
+## 9.1 传输安全
 
 - **强制 HTTPS**：生产环境所有 API 请求必须通过 HTTPS 加密传输，禁止使用 HTTP 明文通信（除非内网调试）
   - 强制使用 TLS 1.2（含）以上版本，推荐 1.3
@@ -460,44 +682,44 @@ Cache-Control: no-cache                # 缓存控制
   - 实施 HSTS（HTTP Strict Transport Security）头，防止降级攻击
   - 服务器应当正确配置强制使用 HTTPS
 
-## 6.2 身份验证与授权
+## 9.2 身份验证与授权
 
 - **身份验证机制**：所有 API 必须有某种足够安全的身份验证机制（比如 JWT token/OAuth 2.0）
 
-## 6.3 输入验证
+## 9.3 输入验证
 
 - **数据验证**：必须假定客户端数据是完全不可信的。对所有输入数据（包括请求参数、请求体和标头）必须进行严格验证和过滤，防止 SQL 注入、XSS 等常见攻击。
   - 参数必须有明确的类型、格式、长度要求
 
-## 6.4 访问控制
+## 9.4 访问控制
 
 - **限流措施**：所有 API 必须考虑实现某种限流措施
   - 可基于 App 级、IP 级、User 级等粒度
   - 可以由 API Gateway 统一实施
 - **敏感信息保护**：避免在 URL 中暴露敏感信息：敏感数据（如密码、API 密钥等）不应出现在 URL 中，因为它们可能会被记录在服务器日志或浏览器历史记录中。
 
-## 6.5 日志与监控
+## 9.5 日志与监控
 
 - **安全日志**：对敏感操作、授权失败等行为应确保有日志记录。
 - **敏感数据处理**：生产环境中，一般不得在日志中输出 accesskey、password、手机号等；如确实有必要，敏感字段应当做脱敏处理。
 - **日志最小化原则**：只记录必要的信息，避免过度记录导致日志量过大，信息冗余，影响性能等。
 
-# 7. 速率限制
+# 10. 速率限制
 
 实施基于身份、IP 和资源的多层级限流等策略，保障系统稳定性和可靠性。
 
-## 7.1 限流的目的
+## 10.1 限流的目的
 
 - **保护后端资源**： 防止因意外或恶意的高流量请求而导致服务器过载、崩溃或性能下降。
 - **保证服务质量**： 确保所有用户都能获得公平的 API 访问机会，避免个别用户过度消耗资源影响其他用户体验。
 - **成本控制**： 限制资源消耗，降低不必要的运营成本。
 - **安全性**： 帮助抵御某些类型的拒绝服务 (DoS) 攻击。
 
-## 7.2 基本原则
+## 10.2 基本原则
 
 原则上所有 API 都应该有限流的考虑。所有有限流机制的 API 必须在文档中说明存在限流，并尽力给出具体的限制数量。
 
-## 7.3 限流维度和策略
+## 10.3 限流维度和策略
 
 **限流维度**
 
@@ -519,7 +741,7 @@ Cache-Control: no-cache                # 缓存控制
 - 如果可能，可以在响应的错误信息中明确告知限流规则，比如"该函数调用频率不得超过 XXX 次/s"。
 - 可以在响应中包含 Retry-After 头部，告知调用方多久后再进行重试。
 
-## 7.4 最佳实践
+## 10.4 最佳实践
 
 **算法选择**
 
@@ -541,335 +763,6 @@ Cache-Control: no-cache                # 缓存控制
 - 设定限流数值时要重复考虑调用该 API 的用户行为和需求。
 - 对于不同服务等级的租户可以设定不同的限流数值。
 
-# 8. 文件
-
-## 8.1 小文件
-
-// todo:
-
-**请求头**
-**响应头**
-**请求体**
-**响应体**
-
-## 8.2 大文件
-
-// todo:
-
-**请求头**
-**响应头**
-**请求体**
-**响应体**
-
-# 9. 查询
-
-查询功能通过定义排序、分页和搜索等规范，来高效地控制和筛选返回的资源结果集。
-
-## 9.1 排序
-
-支持单字段和多字段排序，使用 `sort` 参数标记使用排序规则，例如：`sort=created_at:desc`。
-
-**排序方向**：`asc`（升序）或 `desc`（降序）
-
-- **典型：时间戳排序**：规定 整数值从小到大（asc），从大到小（desc）。
-- **典型：字符串排序**：规定 字符串从小到大（asc）或从大到小（desc）。例如：联系人列表名称首字母排序。
-- **默认排序**： 如果字段没有指定排序规则，则默认排序规则需要说明。
-
-**多值排序**： 支持多字段排序，通过 `,` 分割字段。
-
-## 9.2 分页
-
-支持偏移分页和游标分页两种方式，适用于不同场景。
-
-1. 偏移分页
-
-**参数说明：**
-
-| 参数   | 说明     | 示例                           | 适用场景   |
-| ------ | -------- | ------------------------------ | ---------- |
-| `page` | 页码     | 从 1 开始。例如：`page=1`      | 常规分页   |
-| `size` | 每页数量 | 大于 0 的整数。例如：`size=20` | 控制返回量 |
-
-**使用示例：**
-
-```
-GET /api/v1/users?page=1&size=20
-```
-
-**响应格式：**
-
-```json
-{
-  "data": [...],
-  "meta": {
-    "pagination": {
-      "total": 100,
-      "page": 1,
-      "size": 20,
-      "pages": 5
-    }
-  }
-}
-```
-
-2. 游标分页
-
-**参数说明：**
-
-| 参数     | 说明     | 示例                      | 适用场景   |
-| -------- | -------- | ------------------------- | ---------- |
-| `cursor` | 游标     | `cursor=eyJpZCI6IjEyMyJ9` | 大数据集   |
-| `limit`  | 限制数量 | `limit=20`                | 控制返回量 |
-
-**使用示例：**
-
-```
-GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
-```
-
-**响应格式：**
-
-```json
-{
-  "data": [...],
-  "meta": {
-    "pagination": {
-      "next_cursor": "eyJpZCI6IjEyNCJ9",
-      "has_more": true
-    }
-  }
-}
-```
-
-## 9.3 搜索
-
-支持单值、多值、组合排序等多种搜索方式。
-
-**支持能力**：
-
-- 支持精确匹配
-- 支持多值匹配
-- 支持多字段联合查询
-
-**操作符规则**：
-
-- **相等匹配**：`status=active`
-- **多值查询**：`status=active,pending`
-- **联合查询**：使用符号 `&` 间隔
-
-**使用限制**：
-
-- 不支持范围查询（大于、小于等）
-- 不支持排除匹配（!=）
-- 不支持模糊匹配（\*）
-- 不支持 OR 逻辑组合
-- 不支持复杂的括号分组
-- 不支持嵌套字段查询
-
-**搜索示例：**：
-
-```http
-# 单值搜索（简单搜索模式）
-GET /api/v1/users?status=active
-GET /api/v1/messages?chat_type=single
-
-# 多值搜索（简单搜索模式）
-GET /api/v1/users?status=active,pending
-GET /api/v1/messages?chat_type=single,group
-
-# 搜索+排序
-GET /api/v1/users?status=active&sort=created_at:desc
-GET /api/v1/groups?filter=is_public==true;member_count=ge=10&sort=activity:desc,created_at:desc
-GET /api/v1/messages?chat_id=123&sort=created_at:desc
-```
-
-# 10. 批处理
-
-**批量操作构成 = URL 路径标识(/batch) + 业务数据(必需)**
-
-**操作类型分类：**
-
-- **批量创建**：POST /api/v1/{resource}/batch
-- **批量更新**：PUT /api/v1/{resource}/batch
-- **批量删除**：DELETE /api/v1/{resource}/batch
-- **批量获取**：POST /api/v1/{resource}/batch/get
-
-**事务类型：**
-
-_由服务端决策_
-
-- **原子性事务**：所有操作要么全部成功，要么全部失败
-- **非原子性事务**：部分操作成功，部分操作失败
-
-## 10.1 批量创建示例
-
-**批量创建请求格式示例：**
-
-```http
-POST /api/v1/{resource}/batch
-Content-Type: application/json
-
-{
-  "data": [
-    { "id": "id1" },
-    { "id": "id2" }
-  ]
-}
-```
-
-**批量创建响应格式示例：**
-
-```http
-Content-Type: application/json
-
-{
-  "data": {
-    "success": [
-      { "id": "id1", "status": "created", "createdAt": 1704110400000 }
-    ],
-    "failed": [
-      { "id": "id2", "error": { "code": 4000001, "message": "名称不合法" } }
-    ],
-    "summary": {
-      "totalCount": 2,
-      "successCount": 1,
-      "failedCount": 1
-    }
-  },
-  "meta": {
-    "timestamp": 1704110400000,
-    "requestId": "req1704110400012abc456def78901"
-  }
-}
-```
-
-## 10.2 批量更新示例
-
-**批量更新请求格式：**
-
-```http
-PUT /api/v1/{resource}/batch
-Content-Type: application/json
-
-{
-  "data": [
-    { "id": "id1", "name": "new_value1" },
-    { "id": "id2", "name": "new_value2" }
-  ]
-}
-```
-
-**批量更新响应格式：**
-
-```http
-Content-Type: application/json
-
-{
-  "data": {
-    "success": [
-      { "id": "id1", "status": "updated", "updatedAt": 1704110400000 }
-    ],
-    "failed": [
-      { "id": "id2", "error": { "code": 4040301, "message": "用户不存在" } }
-    ],
-    "summary": {
-      "totalCount": 2,
-      "successCount": 1,
-      "failedCount": 1
-    }
-  },
-  "meta": {
-    "timestamp": 1704110400000,
-    "requestId": "req1704110400012abc456def78901"
-  }
-}
-```
-
-## 10.3 批量删除示例
-
-**批量删除请求格式：**
-
-```http
-DELETE /api/v1/{resource}/batch?ids=id1,id2,id3
-```
-
-**批量删除响应格式：**
-
-```http
-Content-Type: application/json
-
-{
-  "data": {
-    "success": [
-      { "id": "id1", "status": "deleted", "deletedAt": 1704110400000 },
-      { "id": "id2", "status": "deleted", "deletedAt": 1704110400000 }
-    ],
-    "failed": [
-      { "id": "id3", "error": { "code": 4040301, "message": "用户不存在" } }
-    ],
-    "summary": {
-      "totalCount": 3,
-      "successCount": 2,
-      "failedCount": 1
-    }
-  },
-  "meta": {
-    "timestamp": 1704110400000,
-    "requestId": "req1704110400012abc456def78901"
-  }
-}
-```
-
-## 10.4 批量获取示例
-
-**批量获取请求格式示例：**
-
-```http
-POST /api/v1/{resource}/batch/get
-Content-Type: application/json
-
-{
-  "data": ["id1", "id2", "id3"]
-}
-```
-
-**批量获取响应格式示例：**
-
-```http
-Content-Type: application/json
-
-{
-  "data": {
-    "success": [
-      {
-        "id": "id1",
-        "username": "user1",
-        "email": "user1@example.com",
-        "createdAt": 1704110400000
-      },
-      {
-        "id": "id2",
-        "username": "user2",
-        "email": "user2@example.com",
-        "createdAt": 1704110300000
-      }
-    ],
-    "failed": [
-      { "id": "id3", "error": { "code": 4040301, "message": "用户不存在" } }
-    ],
-    "summary": {
-      "totalCount": 3,
-      "successCount": 2,
-      "failedCount": 1
-    }
-  },
-  "meta": {
-    "timestamp": 1704110400000,
-    "requestId": "req1704110400012abc456def78901"
-  }
-}
-```
-
 # todo: 增量更新
 
 1. 降低客户端和服务器的数据交互
@@ -879,3 +772,10 @@ Content-Type: application/json
 
 1. 客户端立刻返回（较少）
 2. 客户端等待返回（通常）
+
+# todo: 是否只采用 jwt token？
+
+1. rongcloud 采用自定义签名的机制https://docs.rongcloud.cn/platform-chat-api
+2. 腾讯采用自定义签名的机制 https://cloud.tencent.cn/document/product/269/32688
+3. sendbird： 采用主备签名的机制: https://sendbird.com/docs/chat/platform-api/v3/prepare-to-use-api
+4. getstream：采用 jwt token 的机制 https://getstream.github.io/protocol/?urls.primaryName=Chat#/product%3Achat/GetApp
