@@ -192,9 +192,7 @@ HTTP Header 用于传递关于请求或响应的元数据，包括身份验证�
 - **文本响应**:
   - `Accept`: 期望响应格式, 值为 `application/json; charset=utf-8`
 - **文件响应**:
-
   - `Accept`: 期望响应格式, 值为: `multipart/form-data; boundary={unique_boundary_string}`
-
 - **压缩响应**:
   - `Accept-Encoding`: 响应体压缩格式, 值为 `gzip`
 - **缓存控制响应**:
@@ -467,71 +465,11 @@ Cache-Control: no-cache                # 缓存控制
 
 - **1000+**: 各业务模块可根据特殊需求定义的专用错误码
 
-# 6. 文件
-
-**基本原则**
-
-- **传输方式**：分片上传
-- **编码方式**：使用原始二进制数据，避免 Base64 编码带来的 33% 数据量增加
-- **Boundary 处理**：使用足够复杂的 boundary 字符串（包含时间戳和随机字符），降低与文件内容冲突的概率
-
-**请求头**
-
-- `Authorization`: `Bearer {token}`
-- `Content-Type`: `multipart/form-data; boundary={unique_boundary_string}`
-- `Accept`: `application/json; charset=utf-8`
-
-**响应头**
-
-- `Content-Type`: `application/json; charset=utf-8`
-
-**请求体**
-
-```raw
-Content-Type: multipart/form-data; boundary={unique_boundary_string}
-
---{unique_boundary_string}
-Content-Disposition: form-data; name="property1"
-
-[value1]
---{unique_boundary_string}
-Content-Disposition: form-data; name="property2"
-
-[value2]
---{unique_boundary_string}
-Content-Disposition: form-data; name="property3"; filename="{file_name}"
-Content-Type: {Content-Type}
-
-[binary contents of the file]
---{unique_boundary_string}--
-```
-
-**响应体**
-
-- fileId: 文件唯一标识
-- chunkIndex: 已上传分片索引。
-- uploadedChunks: 已上传分片数量
-- totalChunks: 总分片数
-
-```json
-{
-  "data": {
-    "fileId": "file_123456789",
-    "chunkIndex": 2,
-    "uploadedChunks": 3,
-    "totalChunks": 5
-  },
-  "meta": {...}
-}
-```
-
-_如果上传失败，请参考章节 4.2_
-
-# 7. 查询
+# 6. 查询
 
 查询功能通过定义排序、分页和搜索等规范，来高效地控制和筛选返回的资源结果集。
 
-## 7.1 排序
+## 6.1 排序
 
 支持单字段和多字段排序，使用 `sort` 参数标记使用排序规则，例如：`sort=created_at:desc`。
 
@@ -543,7 +481,7 @@ _如果上传失败，请参考章节 4.2_
 
 **多值排序**： 支持多字段排序，通过 `,` 分割字段。
 
-## 7.2 分页
+## 6.2 分页
 
 支持偏移分页和游标分页两种方式，适用于不同场景。
 
@@ -625,7 +563,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 }
 ```
 
-## 7.3 搜索
+## 6.3 搜索
 
 支持单值、多值、组合排序等多种搜索方式。
 
@@ -658,7 +596,7 @@ GET /api/v1/groups?filter=is_public==true;member_count=ge=10&sort=activity:desc,
 GET /api/v1/messages?chat_id=123&sort=created_at:desc
 ```
 
-# 8. 批处理
+# 7. 批处理
 
 **批量操作构成 = URL 路径标识(/batch) + 操作关键字(可选)**
 
@@ -718,11 +656,11 @@ _由服务端决策_
 }
 ```
 
-# 9. 安全策略
+# 8. 安全策略
 
 涵盖认证授权、数据安全、访问控制、传输安全和审计监控等核心安全方面。
 
-## 9.1 传输安全
+## 8.1 传输安全
 
 - **强制 HTTPS**：生产环境所有 API 请求必须通过 HTTPS 加密传输，禁止使用 HTTP 明文通信（除非内网调试）
   - 强制使用 TLS 1.2（含）以上版本，推荐 1.3
@@ -732,44 +670,44 @@ _由服务端决策_
   - 实施 HSTS（HTTP Strict Transport Security）头，防止降级攻击
   - 服务器应当正确配置强制使用 HTTPS
 
-## 9.2 身份验证与授权
+## 8.2 身份验证与授权
 
 - **身份验证机制**：所有 API 必须有某种足够安全的身份验证机制（比如 JWT token/OAuth 2.0）
 
-## 9.3 输入验证
+## 8.3 输入验证
 
 - **数据验证**：必须假定客户端数据是完全不可信的。对所有输入数据（包括请求参数、请求体和标头）必须进行严格验证和过滤，防止 SQL 注入、XSS 等常见攻击。
   - 参数必须有明确的类型、格式、长度要求
 
-## 9.4 访问控制
+## 8.4 访问控制
 
 - **限流措施**：所有 API 必须考虑实现某种限流措施
   - 可基于 App 级、IP 级、User 级等粒度
   - 可以由 API Gateway 统一实施
 - **敏感信息保护**：避免在 URL 中暴露敏感信息：敏感数据（如密码、API 密钥等）不应出现在 URL 中，因为它们可能会被记录在服务器日志或浏览器历史记录中。
 
-## 9.5 日志与监控
+## 8.5 日志与监控
 
 - **安全日志**：对敏感操作、授权失败等行为应确保有日志记录。
 - **敏感数据处理**：生产环境中，一般不得在日志中输出 accesskey、password、手机号等；如确实有必要，敏感字段应当做脱敏处理。
 - **日志最小化原则**：只记录必要的信息，避免过度记录导致日志量过大，信息冗余，影响性能等。
 
-# 10. 速率限制
+# 9. 速率限制
 
 实施基于身份、IP 和资源的多层级限流等策略，保障系统稳定性和可靠性。
 
-## 10.1 限流的目的
+## 9.1 限流的目的
 
 - **保护后端资源**： 防止因意外或恶意的高流量请求而导致服务器过载、崩溃或性能下降。
 - **保证服务质量**： 确保所有用户都能获得公平的 API 访问机会，避免个别用户过度消耗资源影响其他用户体验。
 - **成本控制**： 限制资源消耗，降低不必要的运营成本。
 - **安全性**： 帮助抵御某些类型的拒绝服务 (DoS) 攻击。
 
-## 10.2 基本原则
+## 9.2 基本原则
 
 原则上所有 API 都应该有限流的考虑。所有有限流机制的 API 必须在文档中说明存在限流，并尽力给出具体的限制数量。
 
-## 10.3 限流维度和策略
+## 9.3 限流维度和策略
 
 **限流维度**
 
@@ -791,7 +729,7 @@ _由服务端决策_
 - 如果可能，可以在响应的错误信息中明确告知限流规则，比如"该函数调用频率不得超过 XXX 次/s"。
 - 可以在响应中包含 Retry-After 头部，告知调用方多久后再进行重试。
 
-## 10.4 最佳实践
+## 9.4 最佳实践
 
 **算法选择**
 
@@ -812,20 +750,3 @@ _由服务端决策_
 
 - 设定限流数值时要重复考虑调用该 API 的用户行为和需求。
 - 对于不同服务等级的租户可以设定不同的限流数值。
-
-# todo: 增量更新
-
-1. 降低客户端和服务器的数据交互
-2. 保底机制
-
-# todo: 大数据处理：
-
-1. 客户端立刻返回（较少）
-2. 客户端等待返回（通常）
-
-# todo: 是否只采用 jwt token？
-
-1. rongcloud 采用自定义签名的机制https://docs.rongcloud.cn/platform-chat-api
-2. 腾讯采用自定义签名的机制 https://cloud.tencent.cn/document/product/269/32688
-3. sendbird： 采用主备签名的机制: https://sendbird.com/docs/chat/platform-api/v3/prepare-to-use-api
-4. getstream：采用 jwt token 的机制 https://getstream.github.io/protocol/?urls.primaryName=Chat#/product%3Achat/GetApp
