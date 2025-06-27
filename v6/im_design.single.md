@@ -264,21 +264,12 @@ Cache-Control: no-cache                # 缓存控制
 - **批量操作**：需要一次性处理多个资源
 - **大数据传输**：请求体过大时，推荐使用文件上传方式
 
-## 4.2 对象格式响应体
+**请求体格式：**
 
-**响应结构 = 核心数据(data)/错误信息(error) + 元数据(meta)**
-
-- **data 字段**: 包含实际的业务数据（成功响应必需）
-- **error 字段**: 包含错误信息（失败响应必需）
-- **meta 字段**: 包含响应元数据信息（推荐）
-  - timestamp: 毫秒级 UTC 时间戳
-  - requestId: 请求追踪 ID
-
-**命名风格**
-
-- json 请求体对象采用首字母小写的驼峰命名风格，例如：`user`、`userList`、`userListPage` 等。
-
-**成功响应示例：**:
+- data: 请求内容。支持对象、数组、空值等
+- meta: 元数据，用于记录请求信息
+  - timestamp: 请求时间戳
+  - requestId: 请求唯一标识（可选）
 
 ```json
 {
@@ -293,7 +284,48 @@ Cache-Control: no-cache                # 缓存控制
 }
 ```
 
-**失败响应示例：**:
+## 4.2 对象格式响应体
+
+**响应结构 = 核心数据(data)/错误信息(error) + 元数据(meta)**
+
+- **data 字段**: 包含实际的业务数据（成功响应必需）
+- **error 字段**: 包含错误信息（失败响应必需）
+- **meta 字段**: 包含响应元数据信息（推荐）
+  - timestamp: 毫秒级 UTC 时间戳
+  - requestId: 请求追踪 ID
+
+**命名风格**
+
+- json 请求体对象采用首字母小写的驼峰命名风格，例如：`user`、`userList`、`userListPage` 等。
+
+**成功响应格式：**:
+
+- data: 响应内容。支持数组、对象、空值等
+- meta: 元数据
+  - timestamp: 毫秒级 UTC 时间戳
+  - requestId: 请求追踪 ID（可选）
+
+```json
+{
+  "data": {
+    "userId": "123",
+    "username": "zhangsan"
+  },
+  "meta": {
+    "timestamp": 1704110400000,
+    "requestId": "1704110400456abc123def78912"
+  }
+}
+```
+
+**失败响应格式：**:
+
+- error: 错误信息
+  - code: 错误码
+  - message: 错误信息
+- meta: 元数据
+  - timestamp: 毫秒级 UTC 时间戳
+  - requestId: 请求追踪 ID（可选）
 
 ```json
 {
@@ -459,21 +491,143 @@ Cache-Control: no-cache                # 缓存控制
 
 ## 6.1 小文件
 
-// todo:
+小文件指文件大小小于 10MB 的文件，采用 JSON 方式上传下载。
+
+_10MB 是参考值，请根据实际情况决定_
+
+**基本原则**
+
+- **传输方式**：JSON 格式传输文件内容
+- **编码方式**：Base64 编码文件内容
+
+**使用场景**
+
+- **头像上传**：用户头像、群组头像
+- **小图片**：表情包、缩略图
+- **小文档**：配置文件、说明文档
 
 **请求头**
+
+- `Authorization`: `Bearer {token}`
+- `Content-Type`: `application/json; charset=utf-8`
+- `Content-Encoding`: `gzip`
+- `Accept`: `application/json; charset=utf-8`
+
 **响应头**
+
+- `Content-Type`: `application/json; charset=utf-8`
+
 **请求体**
+
+- filename: 文件名
+- content: 经过 base64 编码的文件内容
+- mimeType: 文件类型，服务器保存需要
+- description: 文件描述（可选）
+
+```json
+{
+  "data": {
+    "filename": "avatar.jpg",
+    "content": "base64,/9j/4AAQSkZJRgABAQAAAQ...",
+    "mimeType": "image/jpeg",
+    "description": "用户头像"
+  },
+  "meta": {...}
+}
+```
+
 **响应体**
+
+- fileId: 文件 ID
+- filename: 文件名
+- size: 文件大小
+- mimeType: 文件类型
+- url: 文件 URL
+- uploadedAt: 文件上传时间（可选）
+
+```json
+{
+  "data": {
+    "fileId": "file_123456789",
+    "filename": "avatar.jpg",
+    "size": 102400,
+    "mimeType": "image/jpeg",
+    "url": "https://cdn.example.com/files/file_123456789",
+    "uploadedAt": 1704110400000
+  },
+  "meta": {...}
+}
+```
 
 ## 6.2 大文件
 
-// todo:
+大文件指文件大小大于等于 10MB 的文件，采用分片上传方式。
+
+_10MB 是参考值，请根据实际情况决定_
+
+**基本原则**
+
+- **传输方式**：分片上传，每片大小建议 5MB (参考值，根据实际情况调整)
+- **编码方式**：multipart/form-data 格式
+
+**使用场景**
+
+- **大视频**：聊天视频、语音消息
+- **大图片**：高清图片、长图
+- **大文档**：PDF、Word、Excel 等
+- **压缩包**：ZIP、RAR 等
 
 **请求头**
+
+- `Authorization`: `Bearer {token}`
+- `Content-Type`: `multipart/form-data; boundary={unique_boundary_string}`
+- `Accept`: `application/json; charset=utf-8`
+
 **响应头**
+
+- `Content-Type`: `application/json; charset=utf-8`
+
 **请求体**
+
+```raw
+Content-Type: multipart/form-data; boundary={unique_boundary_string}
+
+--{unique_boundary_string}
+Content-Disposition: form-data; name="property1"
+
+[value1]
+--{unique_boundary_string}
+Content-Disposition: form-data; name="property2"
+
+[value2]
+--{unique_boundary_string}
+Content-Disposition: form-data; name="property3"; filename="{file_name}"
+Content-Type: {Content-Type}
+
+[binary contents of the file]
+--{unique_boundary_string}--
+```
+
 **响应体**
+
+- fileId: 文件唯一标识
+- chunkIndex: 已上传分片索引。当 `chunkIndex = totalChunks - 1`（最后一片）上传后，isCompleted 为 true。
+- uploadedChunks: 已上传分片数量（可选）
+- totalChunks: 总分片数
+- isCompleted: 是否上传完成
+
+```json
+{
+  "data": {
+    "fileId": "file_123456789",
+    "chunkIndex": 2,
+    "uploadedChunks": 3,
+    "totalChunks": 5,
+    "isCompleted": false
+  },
+  "meta": {...}
+}
+```
 
 # 7. 查询
 
