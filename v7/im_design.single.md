@@ -750,3 +750,24 @@ _由服务端决策_
 
 - 设定限流数值时要重复考虑调用该 API 的用户行为和需求。
 - 对于不同服务等级的租户可以设定不同的限流数值。
+
+// todo: 关于 DELETE 方法的使用建议。
+
+例如：
+
+1. DELETE 只用来删除单个资源：例如： `DELETE /api/v1/rooms/123`。
+   ~~2. DELETE 用来删除一组资源：例如：`DELETE /api/v1/rooms`，删除所有房间。~~
+   ~~3. DELETE 用来删除一组资源：例如：`DELETE /api/v1/rooms/123/456/789`，删除三个房间。~~
+
+2. 如果删除多个，则使用 POST 方法 + 请求体 代替。
+
+例如：
+`POST /api/v1/rooms/DELETE -d "["roomId1", "roomId2", "roomId3"]"
+~~`POST /api/v1/rooms/DELETE?rooms=roomId1,roomId2,roomId3`"~~
+
+// todo: POST /api/DELETE？关键字 `DELETE`大写？ 这样可以表示关键字而不是小写的参数或者资源
+// todo: POST /api/GET ？关键字 `GET`大写？ 这样可以表示关键字而不是小写的参数或者资源
+
+// todo: 文件规范讨论
+方案参考 [file](./file_design.md)
+最新规范参考 [file](../v6/im_design.single.md#6-文件)

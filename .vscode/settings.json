@@ -3,8 +3,10 @@
     "easemob",
     "FIQL",
     "getsteam",
+    "getstream",
     "HSTS",
     "restapi",
+    "rondcloud",
     "RSQL",
     "sendbird"
   ]

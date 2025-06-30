@@ -469,44 +469,54 @@ Cache-Control: no-cache                # 缓存控制
 
 # 6. 文件
 
+## 6.1 上传文件
+
 **基本原则**
 
-- **传输方式**：分片上传
-- **编码方式**：使用原始二进制数据，避免 Base64 编码带来的 33% 数据量增加
-- **Boundary 处理**：使用足够复杂的 boundary 字符串（包含时间戳和随机字符），降低与文件内容冲突的概率
+- **传输方式**：分片一次性完成上传
+- **编码方式**：使用原始二进制数据，Base64 会编码带来的 33% 数据量增加，是实际情况决定
 
-**请求头**
+**文件请求头**
 
-- `Authorization`: `Bearer {token}`
-- `Content-Type`: `multipart/form-data; boundary={unique_boundary_string}`
+- `Content-Type`: `multipart/form-data; boundary={unique_boundary_string}`, 请求体由多个部分（part）组成，每个部分用 `unique_boundary_string` 分隔。
 - `Accept`: `application/json; charset=utf-8`
 
-**响应头**
+**文件响应头**
 
 - `Content-Type`: `application/json; charset=utf-8`
 
-**请求体**
+**文件请求体**
 
-```raw
-Content-Type: multipart/form-data; boundary={unique_boundary_string}
+- Content-Disposition: `form-data; name="{nameValue}"; filename="{filenameValue}"`
+  - `nameValue`: 表单字段名称，用于标识上传的文件字段
+  - `filenameValue`: 文件名，包含文件扩展名，用于服务器识别文件类型和处理
+- Content-Type: `{contentTypeValue}` （可选，用于指定文件类型）
+  - `contentTypeValue`: MIME 类型，如 `text/plain`、`image/jpeg`、`application/pdf` 等
+- 后面跟文件的二进制内容
 
+> 文本消息请求示例：
+
+```http
 --{unique_boundary_string}
-Content-Disposition: form-data; name="property1"
-
-[value1]
---{unique_boundary_string}
-Content-Disposition: form-data; name="property2"
-
-[value2]
---{unique_boundary_string}
-Content-Disposition: form-data; name="property3"; filename="{file_name}"
-Content-Type: {Content-Type}
+Content-Disposition: form-data; name="file"; filename="example.txt"
+Content-Type: text/plain
 
 [binary contents of the file]
 --{unique_boundary_string}--
 ```
 
-**响应体**
+> 文件消息请求示例：
+
+```http
+--{unique_boundary_string}
+Content-Disposition: form-data; name="file"; filename="example.bin"
+Content-Type: application/octet-stream
+
+[binary contents of the file]
+--{unique_boundary_string}--
+```
+
+**文件响应体**
 
 - fileId: 文件唯一标识
 - chunkIndex: 已上传分片索引。
@@ -520,6 +530,43 @@ Content-Type: {Content-Type}
     "chunkIndex": 2,
     "uploadedChunks": 3,
     "totalChunks": 5
+  },
+  "meta": {...}
+}
+```
+
+_如果上传失败，请参考章节 4.2_
+
+## 6.2 下载文件
+
+**基本原则**
+
+- **传输方式**：使用 `GET` 方法，一次性下载到本地
+- **文件验证**：通过 `fileId` 验证文件存在性和访问权限
+
+**文件请求头**
+
+- `Accept`: `application/json; charset=utf-8`
+
+```http
+GET /api/v1/files/{fileId}
+Accept: application/json; charset=utf-8
+```
+
+**文件响应头**
+
+- `Content-Type`: `application/json; charset=utf-8`
+
+**文件响应体**
+
+- fileId: 文件唯一标识
+- fileUrl: 文件下载地址
+
+```json
+{
+  "data": {
+    "fileId": "file_123456789",
+    "fileUrl": "/api/v1/files/{fileId}",
   },
   "meta": {...}
 }
