@@ -1,6 +1,6 @@
 # IM RESTFUL API 开发设计规范
 
-本文档基于 `RFC9110`、`RFC9205` 等国际标准，结合 `Claude-4-Sonnet` 的最佳实践，深度分析 IM 业务场景特点，形成了这套较为完整的可落地的规范建议方案。
+本文档基于 `RFC9110`、`RFC9205` 等国际标准，深度分析 IM 业务场景特点，形成了这套较为完整的可落地的规范建议方案。
 
 # 1. HTTP URL
 
@@ -116,7 +116,7 @@ POST /api/v1/users/delete -d ["userId1", "userId2", "userId3"] # 删除多个用
 
 **特殊情况**
 
-- 如果需要在请求体中传递复杂参数做 `GET` 操作，则可用使用 `POST`，但 URL 最后以 `/get` 结束表示实际为 `GET` 使用。
+- 如果需要在请求体中传递复杂参数做 `GET` 操作，则可用使用 `POST`，但 URL 最后以 `/get` 结束表示实际为 `GET` 操作。
 
 **幂等性说明**:
 
@@ -489,7 +489,7 @@ http 状态码只能返回通用的大分类错误，无法深入业务细节表
 - **典型：字符串排序**：规定 字符串从小到大（asc）或从大到小（desc）。
 - **默认排序**： 如果字段没有指定排序规则，则默认排序规则需要在文档中说明。
 
-**多值排序**： 支持多字段排序，通过 `,` 分割字段。
+**多值排序**： 支持多字段排序，通过 英文逗号 分割字段。
 
 ## 6.2 分页
 
@@ -502,7 +502,7 @@ http 状态码只能返回通用的大分类错误，无法深入业务细节表
 | 参数   | 说明     | 要求                           | 适用场景   |
 | ------ | -------- | ------------------------------ | ---------- |
 | `page` | 页码     | 从 1 开始。例如：`page=1`      | 常规分页   |
-| `size` | 每页数量 | 大于 0 的整数。例如：`size=20` | 控制返回量 |
+| `size` | 每页数量 | 大于 0 的整数。例如：`size=20` | 控制返回数量 |
 
 **使用示例：**
 
@@ -515,7 +515,7 @@ GET /api/v1/users?page=1&size=20
 - list: 数组类型
 - pagination: 页码属性
   - totalPages: 总页数（可选）
-  - noMore: 是否有下一页
+  - isFinished: 是否有下一页
   - count: 实际数量大小
   - page: 请求的页码
 
@@ -527,7 +527,7 @@ GET /api/v1/users?page=1&size=20
       "totalPages": 20,
       "page": 20,
       "count": 18,
-      "noMore": true
+      "isFinished": true
     }
   },
   "meta": {...}
@@ -541,7 +541,7 @@ GET /api/v1/users?page=1&size=20
 | 参数     | 说明     | 要求                                      | 适用场景   |
 | -------- | -------- | ----------------------------------------- | ---------- |
 | `cursor` | 游标     | 唯一标识，例如：`cursor=eyJpZCI6IjEyMyJ8` | 大数据集   |
-| `limit`  | 限制数量 | 大于 0 的整数。例如：`limit=20`           | 控制返回量 |
+| `limit`  | 限制数量 | 大于 0 的整数。例如：`limit=20`           | 控制返回数量 |
 
 **使用示例：**
 
@@ -554,7 +554,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
 - list: 数组类型
 - pagination: 页码属性
   - totalPages: 总页数（可选）
-  - noMore: 是否有下一页
+  - isFinished: 是否有下一页
   - count: 实际数量大小
   - cursor: 下一页游标, 如果没有下一页，返回空字符串
 
@@ -566,7 +566,7 @@ GET /api/v1/users?cursor=eyJpZCI6IjEyMyJ9&limit=20
       "totalPages": 20,
       "count": 18,
       "cursor": "",
-      "noMore": true
+      "isFinished": true
     }
   },
   "meta": {...}
