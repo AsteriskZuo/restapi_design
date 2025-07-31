@@ -168,3 +168,69 @@
 - 分组(group)
 - 限制(limit)
 - 包含(include) # 是否是好友、是否是群组成员、是否在黑名单等
+
+# 关键词的选择
+
+## 融云
+
+- 会话类型(conversation_type)
+  - 0: 保留
+  - 1: private
+  - 2: group
+  - 3: room
+- 消息类型(message_type)
+  - 0: 保留
+  - 1: custom
+  - 2: text
+  - 3: voice
+  - ...
+
+[参考](https://doc.rongcloud.cn/apidoc/imlib-react-native/latest/zh_CN/enums/RCIMDefines.RCIMIWMessageType.html)
+
+## 腾讯
+
+- 会话类型(conversation_type)
+  - 0: 保留
+  - 1: c2c
+  - 2: group
+- 消息类型(message_type)
+  - 0: 保留
+  - 1: text
+  - 2: custom
+  - 3: image
+  - ...
+
+[参考](https://im.sdk.qcloud.com/doc/zh-cn/categoryV2TIMManager_07Conversation_08.html#ab3c0612d6a7a52d2f9912b23666ffb59)
+
+## 网易
+
+- 会话类型(session_type)
+  - 0: p2p(单聊)
+  - 1: team(群组)
+  - 2: chatroom(聊天室)
+  - 3: ysf(云商服)
+- 消息类型(message_type)
+  - 0: 保留
+  - 1: text
+  - 2: image
+  - ...
+
+[参考](https://doc.yunxin.163.com/messaging2/references/iOS/doxygen/Latest/zh/db/d9d/_n_i_m_global_defs_8h.html#a5b72bbdd57d39799a5b62ea26fce9fe0)
+
+## sendbird
+
+- 频道类型(channel_type)
+  - open_channel: 自由的、开放的、类似聊天室
+  - group_channel: 有限的，需要邀请的，对应 国内单聊、群聊
+  - super_group_channel: 容纳更多人数的 group channel
+- 消息类型(message_type)
+  - 0: base
+  - 1: user
+  - 2: file
+  - 3: admin
+
+[说明文档](https://sendbird.com/docs/chat/sdk/v4/ios/message/overview-message#2-message-types)
+
+[类似 api 文档](https://sendbird.com/docs/chat/platform-api/v3/message/message-overview)
+
+[接口定义](/Users/asterisk/Codes/sendbird/sendbird-uikit-react-native/node_modules/@sendbird/chat/message.d.ts)
